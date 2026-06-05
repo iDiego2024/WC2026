@@ -1,14 +1,55 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MATCHES, getTeam } from "@/src/data";
 import { format } from "date-fns";
-import { ChevronLeft, ChevronRight, Activity } from "lucide-react";
+import { ChevronLeft, ChevronRight, Activity, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
+import { useTeams, useMatches } from "../hooks/useData";
 
 export function DashboardView() {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { teams, loading: teamsLoading, error: teamsError } = useTeams();
+  const { matches, loading: matchesLoading, error: matchesError } = useMatches();
+
+  const isLoading = teamsLoading || matchesLoading;
+  const error = teamsError || matchesError;
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-400 animate-in fade-in duration-500">
+        <div className="w-8 h-8 rounded-full border-t-2 border-primary animate-spin"></div>
+        <p className="text-xs font-bold uppercase tracking-widest animate-pulse">{t('Cargando Datos de Supabase...', 'Loading Supabase Data...')}</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-400 animate-in fade-in duration-500">
+        <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center border border-red-500/20">
+           <AlertCircle className="w-6 h-6 text-red-500" />
+        </div>
+        <h3 className="text-sm font-bold text-white tracking-wide">{t('Error de Conexión', 'Connection Error')}</h3>
+        <p className="text-xs max-w-sm text-center opacity-80">{error.message}</p>
+      </div>
+    );
+  }
+
+  if (!matches || matches.length === 0 || !teams || teams.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-400 animate-in fade-in duration-500">
+        <Activity className="w-10 h-10 opacity-20" />
+        <h3 className="text-sm font-bold text-white tracking-wide">{t('Sin Datos', 'No Data')}</h3>
+        <p className="text-xs max-w-sm text-center opacity-80">{t('No hay partidos o equipos definidos en Supabase. Por favor corre el seed.', 'No matches or teams defined in Supabase. Please run the seed.')}</p>
+      </div>
+    );
+  }
+
+  // Find featured match for the probability center
+  const featureMatch = matches.find(m => m.status === 'scheduled') || matches[0];
+  const fHome = featureMatch?.home_team;
+  const fAway = featureMatch?.away_team;
 
   return (
     <div className="flex flex-col h-full gap-4 animate-in fade-in duration-500">
@@ -17,45 +58,40 @@ export function DashboardView() {
       <div className="h-16 border border-border bg-secondary flex items-center px-4 gap-4 overflow-x-auto shrink-0 rounded-xl no-scrollbar">
         <div className="flex-none text-[10px] font-bold text-primary uppercase tracking-widest px-2 whitespace-nowrap">{t('Jornada 1', 'Matchday 1')}</div>
         <div className="flex gap-3">
-          <div onClick={() => navigate(`/match/m2`)} className="bg-white/5 cursor-pointer hover:bg-white/10 transition-colors rounded p-2 flex items-center gap-3 w-44 border border-white/5 shrink-0">
-            <div className="flex flex-col gap-1 w-12">
-              <div className="flex items-center gap-2"><img src="https://flagcdn.com/w20/ca.png" className="w-4 h-3 rounded-[2px]" alt="CAN"/><span className="text-[10px] font-bold text-slate-300">CAN</span></div>
-              <div className="flex items-center gap-2"><img src="https://flagcdn.com/w20/ar.png" className="w-4 h-3 rounded-[2px]" alt="ARG"/><span className="text-[10px] font-bold text-slate-300">ARG</span></div>
-            </div>
-            <div className="ml-auto text-right">
-              <div className="text-xs font-bold text-white">18:00</div>
-              <div className="text-[9px] text-slate-500 italic">Vancouver</div>
-            </div>
-          </div>
-          <div onClick={() => navigate(`/match/m1`)} className="bg-white/10 cursor-pointer hover:bg-white/15 transition-colors rounded p-2 flex items-center gap-3 w-44 border border-primary/30 ring-1 ring-primary/20 shrink-0">
-            <div className="flex flex-col gap-1 w-12">
-              <div className="flex items-center gap-2"><img src="https://flagcdn.com/w20/mx.png" className="w-4 h-3 rounded-[2px]" alt="MEX"/><span className="text-[10px] font-bold text-white">MEX</span></div>
-              <div className="flex items-center gap-2"><img src="https://flagcdn.com/w20/ma.png" className="w-4 h-3 rounded-[2px]" alt="MAR"/><span className="text-[10px] font-bold text-white">MAR</span></div>
-            </div>
-            <div className="ml-auto text-right">
-               <div className="text-[10px] font-bold text-primary animate-pulse">{t('EN VIVO', 'LIVE')}</div>
-               <div className="text-[11px] font-mono font-bold text-white">2 - 1</div>
-            </div>
-          </div>
-          <div className="bg-white/5 rounded p-2 flex items-center gap-3 w-44 border border-white/5 opacity-60 shrink-0">
-            <div className="flex flex-col gap-1 w-12">
-              <div className="flex items-center gap-2"><img src="https://flagcdn.com/w20/us.png" className="w-4 h-3 rounded-[2px]" alt="USA"/><span className="text-[10px] font-bold text-slate-300">USA</span></div>
-              <div className="flex items-center gap-2"><img src="https://flagcdn.com/w20/kr.png" className="w-4 h-3 rounded-[2px]" alt="KOR"/><span className="text-[10px] font-bold text-slate-300">KOR</span></div>
-            </div>
-            <div className="ml-auto text-right">
-              <div className="text-xs font-bold text-white">21:30</div>
-              <div className="text-[9px] text-slate-500 italic">Dallas</div>
-            </div>
-          </div>
-          <div className="bg-white/5 rounded p-2 flex items-center gap-3 w-44 border border-white/5 opacity-60 shrink-0">
-            <div className="flex flex-col gap-1 w-12">
-              <div className="flex items-center gap-2"><img src="https://flagcdn.com/w20/gb-eng.png" className="w-4 h-3 rounded-[2px]" alt="ENG"/><span className="text-[10px] font-bold text-slate-300">ENG</span></div>
-              <div className="flex items-center gap-2"><img src="https://flagcdn.com/w20/gh.png" className="w-4 h-3 rounded-[2px]" alt="GHA"/><span className="text-[10px] font-bold text-slate-300">GHA</span></div>
-            </div>
-            <div className="ml-auto text-right">
-              <div className="text-[10px] font-bold font-mono text-slate-400">{t('MAÑANA', 'TOM')}</div>
-            </div>
-          </div>
+          {matches.slice(0, 4).map(match => {
+            const isLive = match.status === 'live';
+            const isFinished = match.status === 'finished';
+            const home = match.home_team;
+            const away = match.away_team;
+            if (!home || !away) return null;
+            
+            return (
+              <div key={match.id} onClick={() => navigate(`/match/${match.id}`)} className={`cursor-pointer transition-colors rounded p-2 flex items-center gap-3 w-44 shrink-0 ${isLive ? 'bg-white/10 hover:bg-white/15 border border-primary/30 ring-1 ring-primary/20' : 'bg-white/5 hover:bg-white/10 border border-white/5 opacity-80'}`}>
+                <div className="flex flex-col gap-1 w-12">
+                  <div className="flex items-center gap-2"><img src={`https://flagcdn.com/w20/${home.flag_code.toLowerCase()}.png`} className="w-4 h-3 rounded-[2px]" alt={home.code}/><span className="text-[10px] font-bold text-white">{home.code}</span></div>
+                  <div className="flex items-center gap-2"><img src={`https://flagcdn.com/w20/${away.flag_code.toLowerCase()}.png`} className="w-4 h-3 rounded-[2px]" alt={away.code}/><span className="text-[10px] font-bold text-white">{away.code}</span></div>
+                </div>
+                <div className="ml-auto text-right">
+                  {isLive ? (
+                     <>
+                       <div className="text-[10px] font-bold text-primary animate-pulse">{t('EN VIVO', 'LIVE')}</div>
+                       <div className="text-[11px] font-mono font-bold text-white">{match.home_score ?? 0} - {match.away_score ?? 0}</div>
+                     </>
+                  ) : isFinished ? (
+                     <>
+                       <div className="text-[10px] font-bold text-slate-400 font-mono tracking-widest">FT</div>
+                       <div className="text-[11px] font-mono font-bold text-white">{match.home_score ?? 0} - {match.away_score ?? 0}</div>
+                     </>
+                  ) : (
+                     <>
+                       <div className="text-xs font-bold text-white">{format(new Date(match.date), "HH:mm")}</div>
+                       <div className="text-[9px] text-slate-500 italic max-w-[50px] truncate">{match.stadium?.city || 'TBD'}</div>
+                     </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -80,30 +116,20 @@ export function DashboardView() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/50">
-                  <tr className="hover:bg-white/5 transition-colors">
-                    <td className="py-2.5 font-bold text-primary">1</td>
-                    <td className="py-2.5"><div className="flex items-center gap-2"><img src="https://flagcdn.com/w20/mx.png" className="w-4 h-3 rounded-[2px]" alt="MEX"/><span className="font-bold text-white">MEX</span></div></td>
-                    <td className="py-2.5 text-center font-bold text-white">3</td>
-                    <td className="py-2.5 text-center text-slate-400 font-mono">84.2%</td>
-                  </tr>
-                  <tr className="hover:bg-white/5 transition-colors">
-                    <td className="py-2.5 font-bold text-slate-300">2</td>
-                    <td className="py-2.5"><div className="flex items-center gap-2"><img src="https://flagcdn.com/w20/ca.png" className="w-4 h-3 rounded-[2px]" alt="CAN"/><span className="font-bold text-white">CAN</span></div></td>
-                    <td className="py-2.5 text-center font-bold text-white">0</td>
-                    <td className="py-2.5 text-center text-slate-400 font-mono">61.8%</td>
-                  </tr>
-                  <tr className="opacity-70 hover:bg-white/5 transition-colors">
-                    <td className="py-2.5 font-bold text-slate-500">3</td>
-                    <td className="py-2.5"><div className="flex items-center gap-2"><img src="https://flagcdn.com/w20/it.png" className="w-4 h-3 rounded-[2px]" alt="ITA"/><span className="font-bold text-slate-300">ITA</span></div></td>
-                    <td className="py-2.5 text-center font-bold text-slate-300">0</td>
-                    <td className="py-2.5 text-center text-slate-500 font-mono">44.1%</td>
-                  </tr>
-                  <tr className="opacity-50 hover:bg-white/5 transition-colors">
-                    <td className="py-2.5 font-bold text-slate-500">4</td>
-                    <td className="py-2.5"><div className="flex items-center gap-2"><img src="https://flagcdn.com/w20/ma.png" className="w-4 h-3 rounded-[2px]" alt="MAR"/><span className="font-bold text-slate-300">MAR</span></div></td>
-                    <td className="py-2.5 text-center font-bold text-slate-300">0</td>
-                    <td className="py-2.5 text-center text-slate-500 font-mono">9.9%</td>
-                  </tr>
+                  {teams.filter(t => t.group_name === 'A').slice(0, 4).map((team, index) => {
+                    const isTop = index === 0;
+                    const pts = isTop ? 3 : 0;
+                    const prob = isTop ? '84.2%' : index === 1 ? '61.8%' : index === 2 ? '44.1%' : '9.9%';
+                    const opacityClass = index === 2 ? 'opacity-70' : index === 3 ? 'opacity-50' : '';
+                    return (
+                      <tr key={team.id} className={`${opacityClass} hover:bg-white/5 transition-colors`}>
+                        <td className={`py-2.5 font-bold ${isTop ? 'text-primary' : 'text-slate-500'}`}>{index + 1}</td>
+                        <td className="py-2.5"><div className="flex items-center gap-2"><img src={`https://flagcdn.com/w20/${team.flag_code.toLowerCase()}.png`} className="w-4 h-3 rounded-[2px]" alt={team.code}/><span className={`font-bold ${isTop ? 'text-white' : 'text-slate-300'}`}>{team.code}</span></div></td>
+                        <td className={`py-2.5 text-center font-bold ${isTop ? 'text-white' : 'text-slate-300'}`}>{pts}</td>
+                        <td className={`py-2.5 text-center font-mono ${isTop ? 'text-slate-400' : 'text-slate-500'}`}>{prob}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
               <div className="mt-4 p-3 rounded-md bg-primary/5 border border-primary/10">
@@ -136,10 +162,10 @@ export function DashboardView() {
               <div className="flex items-center justify-center gap-8 md:gap-16 w-full">
                 <div className="flex flex-col items-center gap-4 group cursor-pointer w-24">
                   <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-secondary p-3 border border-border group-hover:border-primary/50 transition-colors flex items-center justify-center">
-                    <img src="https://flagcdn.com/w80/ar.png" className="w-full h-auto rounded shadow-sm" alt="ARG" />
+                    {fHome ? <img src={`https://flagcdn.com/w80/${fHome.flag_code.toLowerCase()}.png`} className="w-full h-auto rounded shadow-sm" alt={fHome.code} /> : <div className="w-full h-full bg-primary/20 rounded-full" />}
                   </div>
                   <div className="text-center">
-                    <div className="text-sm md:text-xl font-black text-white tracking-wide">{t('ARGENTINA', 'ARGENTINA')}</div>
+                    <div className="text-sm md:text-xl font-black text-white tracking-wide">{fHome ? fHome.name.toUpperCase() : 'TBD'}</div>
                     <div className="text-primary font-mono text-sm md:text-lg font-bold">58.2%</div>
                   </div>
                 </div>
@@ -151,10 +177,10 @@ export function DashboardView() {
                 
                 <div className="flex flex-col items-center gap-4 group cursor-pointer w-24">
                   <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-secondary p-3 border border-border group-hover:border-red-500/50 transition-colors flex items-center justify-center">
-                    <img src="https://flagcdn.com/w80/ca.png" className="w-full h-auto rounded shadow-sm" alt="CAN" />
+                    {fAway ? <img src={`https://flagcdn.com/w80/${fAway.flag_code.toLowerCase()}.png`} className="w-full h-auto rounded shadow-sm" alt={fAway.code} /> : <div className="w-full h-full bg-red-500/20 rounded-full" />}
                   </div>
                   <div className="text-center">
-                    <div className="text-sm md:text-xl font-black text-white tracking-wide">{t('CANADÁ', 'CANADA')}</div>
+                    <div className="text-sm md:text-xl font-black text-white tracking-wide">{fAway ? fAway.name.toUpperCase() : 'TBD'}</div>
                     <div className="text-slate-500 font-mono text-sm md:text-lg font-bold">27.0%</div>
                   </div>
                 </div>
@@ -175,7 +201,7 @@ export function DashboardView() {
                 <div>
                   <div className="flex items-center justify-between text-[9px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
                     <span>{t('Ranking FIFA', 'FIFA Ranking')}</span>
-                    <span className="text-white font-mono">1 | 48</span>
+                    <span className="text-white font-mono">{fHome?.fifa_rank || '?'} | {fAway?.fifa_rank || '?'}</span>
                   </div>
                   <div className="flex h-1.5 rounded-full overflow-hidden bg-secondary">
                     <div className="h-full w-[88%] bg-blue-500"></div>
