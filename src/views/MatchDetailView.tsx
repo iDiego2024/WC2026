@@ -1,18 +1,63 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { MATCHES, getTeam } from '@/src/data';
 import { format } from 'date-fns';
-import { ChevronLeft, BrainCircuit, Activity, Flame, Shield, Swords, ArrowUpRight, Crosshair, BarChart2 } from 'lucide-react';
+import { ChevronLeft, BrainCircuit, Activity, Flame, Shield, Swords, ArrowUpRight, Crosshair, BarChart2, AlertCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "../context/LanguageContext";
+import { useMatch, useTeams } from "../hooks/useData";
 
 export function MatchDetailView() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t } = useLanguage();
-  // For demo, just use the first match if id is missing or not found
-  const match = MATCHES.find(m => m.id === id) || MATCHES[0];
-  const home = getTeam(match.homeTeamId)!;
-  const away = getTeam(match.awayTeamId)!;
+  
+  const { match, loading: matchLoading, error: matchError } = useMatch(id || '');
+  const { loading: teamsLoading, error: teamsError } = useTeams(); // Used to ensure team data is cached or ready for future features
+
+  const isLoading = matchLoading || teamsLoading;
+  const error = matchError || teamsError;
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-400 animate-in fade-in duration-500 min-h-[400px]">
+        <div className="w-8 h-8 rounded-full border-t-2 border-primary animate-spin"></div>
+        <p className="text-xs font-bold uppercase tracking-widest animate-pulse">{t('Cargando Partido...', 'Loading Match...')}</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-400 animate-in fade-in duration-500 min-h-[400px]">
+        <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center border border-red-500/20">
+           <AlertCircle className="w-6 h-6 text-red-500" />
+        </div>
+        <h3 className="text-sm font-bold text-white tracking-wide">{t('Error de Conexión', 'Connection Error')}</h3>
+        <p className="text-xs max-w-sm text-center opacity-80">{error.message}</p>
+      </div>
+    );
+  }
+
+  if (!match) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-400 animate-in fade-in duration-500 min-h-[400px]">
+        <Activity className="w-10 h-10 opacity-20" />
+        <h3 className="text-sm font-bold text-white tracking-wide">{t('Partido No Encontrado', 'Match Not Found')}</h3>
+        <p className="text-xs max-w-sm text-center opacity-80">{t('No pudimos encontrar la información de este partido.', 'We could not find the information for this match.')}</p>
+      </div>
+    );
+  }
+
+  const { home_team: home, away_team: away, stadium } = match;
+
+  if (!home || !away) {
+     return (
+      <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-400 animate-in fade-in duration-500 min-h-[400px]">
+        <Activity className="w-10 h-10 opacity-20" />
+        <h3 className="text-sm font-bold text-white tracking-wide">{t('Datos Incompletos', 'Incomplete Data')}</h3>
+        <p className="text-xs max-w-sm text-center opacity-80">{t('Faltan datos de los equipos.', 'Team data is missing.')}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 animate-in fade-in duration-500 h-full flex flex-col pb-6">
@@ -23,7 +68,7 @@ export function MatchDetailView() {
           <ChevronLeft className="w-4 h-4 text-slate-300" />
         </button>
         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-          {match.stage} {match.group && `• ${t('Grupo', 'Group')} ${match.group}`} • {match.stadium}
+          {match.stage} {match.group_name && `• ${t('Grupo', 'Group')} ${match.group_name}`} • {stadium?.name || stadium?.city || 'TBD'}
         </div>
       </div>
 
@@ -38,30 +83,38 @@ export function MatchDetailView() {
           <div className="flex items-center justify-between gap-4 relative z-10">
             {/* Home Team */}
             <div className="flex flex-col items-center gap-3 w-1/3">
-              <img src={`https://flagcdn.com/w160/${home.flagCode.toLowerCase()}.png`} className="w-20 md:w-28 h-auto rounded shadow-lg border border-white/10" alt={home.name} />
+              <img src={`https://flagcdn.com/w160/${home.flag_code.toLowerCase()}.png`} className="w-20 md:w-28 h-auto rounded shadow-lg border border-white/10" alt={home.name} />
               <div className="text-center">
                 <h2 className="text-lg md:text-2xl font-black text-white">{home.name}</h2>
-                <div className="text-[10px] font-bold text-slate-500 uppercase">{t('Ranking', 'Rank')} {home.fifaRank}</div>
+                <div className="text-[10px] font-bold text-slate-500 uppercase">{t('Ranking', 'Rank')} {home.fifa_rank || '?'}</div>
               </div>
             </div>
 
             {/* Score & Context */}
             <div className="flex flex-col items-center justify-center w-1/3 shrink-0">
-              <div className="text-xs font-bold text-primary animate-pulse mb-2 tracking-widest bg-primary/10 px-3 py-1 rounded border border-primary/20">{t('EN VIVO', 'LIVE')} 67'</div>
+              {match.status === 'live' && (
+                <div className="text-xs font-bold text-primary animate-pulse mb-2 tracking-widest bg-primary/10 px-3 py-1 rounded border border-primary/20">{t('EN VIVO', 'LIVE')}</div>
+              )}
+              {match.status === 'finished' && (
+                <div className="text-xs font-bold text-slate-400 mb-2 tracking-widest px-3 py-1 rounded">{t('FINALIZADO', 'FINISHED')}</div>
+              )}
+              {match.status === 'scheduled' && (
+                <div className="text-xs font-bold text-slate-400 mb-2 tracking-widest px-3 py-1 rounded">{format(new Date(match.date), 'dd MMM HH:mm')}</div>
+              )}
+              
               <div className="flex items-center gap-4 text-5xl md:text-7xl font-black text-white italic">
-                <span>2</span>
+                <span>{match.home_score ?? '-'}</span>
                 <span className="text-2xl md:text-3xl text-slate-600 not-italic">-</span>
-                <span>1</span>
+                <span>{match.away_score ?? '-'}</span>
               </div>
-              <div className="text-[11px] font-mono text-slate-400 mt-2">Agg: {match.homeScore}-{match.awayScore}</div>
             </div>
 
             {/* Away Team */}
             <div className="flex flex-col items-center gap-3 w-1/3">
-              <img src={`https://flagcdn.com/w160/${away.flagCode.toLowerCase()}.png`} className="w-20 md:w-28 h-auto rounded shadow-lg border border-white/10" alt={away.name} />
+              <img src={`https://flagcdn.com/w160/${away.flag_code.toLowerCase()}.png`} className="w-20 md:w-28 h-auto rounded shadow-lg border border-white/10" alt={away.name} />
               <div className="text-center">
                 <h2 className="text-lg md:text-2xl font-black text-white">{away.name}</h2>
-                <div className="text-[10px] font-bold text-slate-500 uppercase">{t('Ranking', 'Rank')} {away.fifaRank}</div>
+                <div className="text-[10px] font-bold text-slate-500 uppercase">{t('Ranking', 'Rank')} {away.fifa_rank || '?'}</div>
               </div>
             </div>
           </div>
@@ -71,13 +124,13 @@ export function MatchDetailView() {
         <div className="h-10 bg-secondary/80 border-t border-border flex items-center">
           <div className="flex items-center justify-center w-full text-[10px] font-bold h-full">
             <div className="h-full bg-blue-600 flex items-center justify-start px-4 text-white" style={{ width: '65%' }}>
-              ARG {t('GANA', 'WIN')} 65%
+              {home.code} {t('GANA', 'WIN')} 65%
             </div>
             <div className="h-full bg-slate-700 flex items-center justify-center text-slate-300" style={{ width: '20%' }}>
               {t('EMPATE', 'DRAW')} 20%
             </div>
             <div className="h-full bg-red-600 flex items-center justify-end px-4 text-white" style={{ width: '15%' }}>
-              15% CAN {t('GANA', 'WIN')}
+              15% {away.code} {t('GANA', 'WIN')}
             </div>
           </div>
         </div>
