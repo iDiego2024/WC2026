@@ -3,12 +3,18 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { BrainCircuit, Play, BarChart2, Activity, ShieldAlert, Cpu, Settings2, RefreshCcw, Database, Zap, Code } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTeams, useMatches } from '../hooks/useData';
+import { runMonteCarlo } from '../utils/simulatorEngine';
 
 export function SimulatorView() {
+  const { teams, loading: teamsLoading, error: teamsError } = useTeams();
+  const { matches, loading: matchesLoading, error: matchesError } = useMatches();
+  
   const [isSimulating, setIsSimulating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [runs, setRuns] = useState(10000);
   const [scope, setScope] = useState('full');
+  const [simulationResults, setSimulationResults] = useState<any[] | null>(null);
 
   const [weights, setWeights] = useState({
     elo: 45,
@@ -17,22 +23,83 @@ export function SimulatorView() {
     momentum: 10
   });
 
+  const handleResetWeights = () => {
+    setWeights({
+      elo: 45,
+      xg: 30,
+      fatigue: 15,
+      momentum: 10
+    });
+  };
+
   const handleSimulate = () => {
+    if (teams.length === 0 || matches.length === 0) return;
     setIsSimulating(true);
     setProgress(0);
+
+    // Prepare teams with dynamic calculated strengths based on FIFA rank and weights
+    const teamSims = teams.map(t => {
+      // Base strength mapping (rank 1 -> 100, rank 100 -> 10)
+      const baseStrength = Math.max(10, 100 - (t.fifa_rank || 50) * 0.85);
+      
+      const eloFactor = (weights.elo / 100) * baseStrength;
+      const xgFactor = (weights.xg / 100) * baseStrength;
+      // Inject minor fluctuations based on fatigue & momentum weights
+      const fatigueFactor = (weights.fatigue / 100) * (Math.random() * 10 - 5);
+      const momentumFactor = (weights.momentum / 100) * (Math.random() * 10 - 5);
+      
+      const finalStrength = Math.max(10, eloFactor + xgFactor + fatigueFactor + momentumFactor);
+      
+      return {
+        id: t.id,
+        code: t.code,
+        name: t.name,
+        flag_code: t.flag_code,
+        group_name: t.group_name || 'A',
+        fifa_rank: t.fifa_rank || 50,
+        strength: finalStrength
+      };
+    });
+
+    const matchSims = matches.map(m => ({
+      id: m.id,
+      home_team_id: m.home_team_id,
+      away_team_id: m.away_team_id,
+      group_name: m.group_name,
+      stage: m.stage,
+      status: m.status,
+      home_score: m.home_score,
+      away_score: m.away_score
+    }));
+
+    let currentProgress = 0;
+    const step = runs >= 100000 ? 2 : runs >= 10000 ? 5 : runs >= 1000 ? 10 : 20;
+    
     const interval = setInterval(() => {
-      setProgress(p => {
-        if (p >= 100) {
-          clearInterval(interval);
-          setIsSimulating(false);
-          return 100;
-        }
-        // Speed varies based on runs
-        const step = runs > 10000 ? 2 : runs > 1000 ? 5 : 10;
-        return p + step;
-      });
-    }, 50);
+      currentProgress += step;
+      if (currentProgress >= 100) {
+        clearInterval(interval);
+        
+        // Execute Monte Carlo simulation using the dynamic engine
+        const results = runMonteCarlo(teamSims, matchSims, {}, runs);
+        setSimulationResults(results);
+        setProgress(100);
+        setIsSimulating(false);
+      } else {
+        setProgress(currentProgress);
+      }
+    }, 30);
   };
+
+  // Extract championship contender results
+  const topContenders = simulationResults ? simulationResults.slice(0, 10) : [];
+  const mostLikelyWinner = simulationResults?.[0];
+  const mostLikelyRunnerUp = simulationResults?.[1];
+
+  // Discover dark horse anomalies (e.g. rank > 25 but reached semifinals at least 5% of the time)
+  const anomalies = simulationResults
+    ? simulationResults.filter(t => t.fifa_rank > 25 && t.semi > 3).slice(0, 2)
+    : [];
 
   const PSEUDO_CODE = `function monteCarloTournament(teams, runs) {
   let results = initResultsMap(teams);
@@ -85,11 +152,25 @@ function simMatch(teamA, teamB, eloA, eloB) {
           </div>
           <div className="w-px h-8 bg-border"></div>
           <div className="flex flex-col">
-            <span className="text-[9px] uppercase font-bold text-slate-500">Last Execution</span>
-            <span className="text-xs font-mono font-bold text-white">42s ago</span>
+            <span className="text-[9px] uppercase font-bold text-slate-500">Database Connection</span>
+            <span className="text-xs font-mono font-bold text-white flex items-center gap-1">
+              <Database className="w-3.5 h-3.5 text-blue-400" /> Connected
+            </span>
           </div>
         </div>
       </header>
+
+      {teamsError || matchesError ? (
+        <Card className="bg-destructive/10 border-destructive/20 text-destructive-foreground p-4">
+          <div className="flex items-center gap-3">
+            <ShieldAlert className="w-6 h-6 text-destructive" />
+            <div>
+              <h3 className="font-bold text-white">Database connection error</h3>
+              <p className="text-xs text-slate-400">Failed to load teams or matches data. Verify Supabase tables exist and match data has been seeded.</p>
+            </div>
+          </div>
+        </Card>
+      ) : null}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         
@@ -128,7 +209,7 @@ function simMatch(teamA, teamB, eloA, eloB) {
               <div className="space-y-4 pt-4 border-t border-border/50">
                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
                    <span>Model Weights</span>
-                   <span className="text-primary cursor-pointer hover:underline">Reset</span>
+                   <span onClick={handleResetWeights} className="text-primary cursor-pointer hover:underline">Reset</span>
                  </label>
                  
                  <div className="space-y-1">
@@ -137,7 +218,7 @@ function simMatch(teamA, teamB, eloA, eloB) {
                      <span className="text-primary font-mono">{weights.elo}%</span>
                    </div>
                    <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-                     <div className="h-full bg-blue-500 w-[45%]"></div>
+                     <div className="h-full bg-blue-500" style={{ width: `${weights.elo}%` }}></div>
                    </div>
                  </div>
                  
@@ -147,7 +228,7 @@ function simMatch(teamA, teamB, eloA, eloB) {
                      <span className="text-primary font-mono">{weights.xg}%</span>
                    </div>
                    <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-                     <div className="h-full bg-blue-500 w-[30%]"></div>
+                     <div className="h-full bg-blue-500" style={{ width: `${weights.xg}%` }}></div>
                    </div>
                  </div>
 
@@ -157,7 +238,7 @@ function simMatch(teamA, teamB, eloA, eloB) {
                      <span className="text-primary font-mono">{weights.fatigue}%</span>
                    </div>
                    <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-                     <div className="h-full bg-blue-500 w-[15%]"></div>
+                     <div className="h-full bg-blue-500" style={{ width: `${weights.fatigue}%` }}></div>
                    </div>
                  </div>
               </div>
@@ -166,7 +247,6 @@ function simMatch(teamA, teamB, eloA, eloB) {
 
           {/* Engine Runner */}
           <Card className="bg-card border-border flex flex-col relative overflow-hidden">
-             {/* Animated background during sim */}
              {isSimulating && (
                <div className="absolute inset-0 bg-blue-500/5 pulse-matrix pointer-events-none">
                  <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:20px_20px] opacity-20 [mask-image:linear-gradient(to_bottom,transparent,black,transparent)] animate-slide-up"></div>
@@ -175,14 +255,21 @@ function simMatch(teamA, teamB, eloA, eloB) {
             <CardContent className="p-6 relative z-10 space-y-6">
               <Button 
                 onClick={handleSimulate} 
-                disabled={isSimulating}
+                disabled={isSimulating || teamsLoading || matchesLoading || teams.length === 0}
                 className={`w-full h-14 ${isSimulating ? 'bg-secondary text-primary border border-primary/50' : 'bg-primary hover:bg-primary/90 text-primary-foreground'} font-black uppercase tracking-widest text-xs transition-all`}
               >
-                {isSimulating ? (
+                {teamsLoading || matchesLoading ? (
+                  <>
+                    <RefreshCcw className="w-5 h-5 mr-3 animate-spin" />
+                    Loading Database...
+                  </>
+                ) : isSimulating ? (
                   <>
                     <RefreshCcw className="w-5 h-5 mr-3 animate-spin" />
                     Crunching {runs.toLocaleString()} runs...
                   </>
+                ) : teams.length === 0 ? (
+                  "NO SEEDED DATA"
                 ) : (
                   <>
                     <Play className="w-5 h-5 mr-3" />
@@ -227,7 +314,7 @@ function simMatch(teamA, teamB, eloA, eloB) {
 
             <div className="flex-1 p-4 overflow-y-auto relative min-h-[400px]">
               
-              {!isSimulating && progress === 0 ? (
+              {!isSimulating && !simulationResults ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 space-y-4">
                   <div className="w-16 h-16 rounded-full bg-secondary border border-border flex items-center justify-center">
                     <BrainCircuit className="w-8 h-8 text-slate-600" />
@@ -251,62 +338,79 @@ function simMatch(teamA, teamB, eloA, eloB) {
                   <TabsContent value="results" className="m-0 h-full space-y-6 animate-in fade-in zoom-in-95 duration-500">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-xs font-black uppercase tracking-widest text-white">Championship Probabilities</h3>
-                      <span className="text-[9px] font-mono text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20">CONFIDENCE: HIGHEST (100k RUNS)</span>
+                      <span className="text-[9px] font-mono text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20">CONFIDENCE: HIGHEST ({runs.toLocaleString()} RUNS)</span>
                     </div>
 
                     <div className="space-y-4">
-                      {/* Top 5 Contenders */}
-                      {[
-                        { name: 'Argentina', flag: 'ar', prob: 16.4, color: 'bg-blue-400' },
-                        { name: 'France', flag: 'fr', prob: 14.2, color: 'bg-blue-600' },
-                        { name: 'England', flag: 'gb-eng', prob: 12.1, color: 'bg-red-500' },
-                        { name: 'Brazil', flag: 'br', prob: 11.8, color: 'bg-yellow-400' },
-                        { name: 'Spain', flag: 'es', prob: 9.3, color: 'bg-red-600' },
-                      ].map((team, idx) => (
-                        <div key={team.name} className="flex items-center gap-4 group">
-                          <div className="w-4 text-[10px] font-bold text-slate-500 text-right">{idx + 1}</div>
-                          <img src={`https://flagcdn.com/w20/${team.flag}.png`} className="w-5 h-3.5 rounded-[2px]" alt={team.name} />
-                          <div className="w-24 text-[11px] font-bold text-slate-200">{team.name}</div>
-                          
-                          <div className="flex-1 flex items-center gap-3">
-                            <div className="flex-1 h-3 bg-secondary rounded-sm overflow-hidden relative group-hover:bg-white/5 transition-colors">
-                              <div className={`h-full ${team.color} transition-all duration-1000 ease-out`} style={{ width: `${(team.prob / 20) * 100}%`}}></div>
+                      {topContenders.map((team, idx) => {
+                        const colors = ['bg-blue-400', 'bg-blue-600', 'bg-red-500', 'bg-yellow-400', 'bg-red-600', 'bg-emerald-500', 'bg-orange-500', 'bg-cyan-500', 'bg-purple-500', 'bg-slate-500'];
+                        const color = colors[idx % colors.length];
+                        
+                        return (
+                          <div key={team.teamId} className="flex items-center gap-4 group">
+                            <div className="w-4 text-[10px] font-bold text-slate-500 text-right">{idx + 1}</div>
+                            <img src={`https://flagcdn.com/w20/${team.flag_code.toLowerCase()}.png`} className="w-5 h-3.5 rounded-[2px]" alt={team.name} />
+                            <div className="w-24 text-[11px] font-bold text-slate-200 truncate">{team.name}</div>
+                            
+                            <div className="flex-1 flex items-center gap-3">
+                              <div className="flex-1 h-3 bg-secondary rounded-sm overflow-hidden relative group-hover:bg-white/5 transition-colors">
+                                <div className={`h-full ${color} transition-all duration-1000 ease-out`} style={{ width: `${team.wins}%`}}></div>
+                              </div>
+                              <div className="w-12 text-right font-mono text-xs font-bold text-white">{team.wins}%</div>
                             </div>
-                            <div className="w-12 text-right font-mono text-xs font-bold text-white">{team.prob}%</div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-border/50">
                        <div className="p-4 bg-secondary/30 rounded-xl border border-white/5">
                          <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-1">Most Likely Final</div>
-                         <div className="flex items-center gap-3 mt-3">
-                           <div className="flex items-center gap-2"><img src="https://flagcdn.com/w20/ar.png" className="w-5 h-3.5 rounded-[2px]" alt="ARG"/><span className="text-sm font-black text-white">ARG</span></div>
-                           <span className="text-[10px] font-mono text-slate-500">v</span>
-                           <div className="flex items-center gap-2"><span className="text-sm font-black text-white">FRA</span><img src="https://flagcdn.com/w20/fr.png" className="w-5 h-3.5 rounded-[2px]" alt="FRA"/></div>
-                         </div>
-                         <div className="text-[10px] font-mono text-primary font-bold mt-2">11.2% Probability</div>
+                         {mostLikelyWinner && mostLikelyRunnerUp ? (
+                           <>
+                             <div className="flex items-center gap-3 mt-3">
+                               <div className="flex items-center gap-2">
+                                 <img src={`https://flagcdn.com/w20/${mostLikelyWinner.flag_code.toLowerCase()}.png`} className="w-5 h-3.5 rounded-[2px]" alt={mostLikelyWinner.name}/>
+                                 <span className="text-sm font-black text-white">{mostLikelyWinner.code}</span>
+                               </div>
+                               <span className="text-[10px] font-mono text-slate-500">v</span>
+                               <div className="flex items-center gap-2">
+                                 <span className="text-sm font-black text-white">{mostLikelyRunnerUp.code}</span>
+                                 <img src={`https://flagcdn.com/w20/${mostLikelyRunnerUp.flag_code.toLowerCase()}.png`} className="w-5 h-3.5 rounded-[2px]" alt={mostLikelyRunnerUp.name}/>
+                               </div>
+                             </div>
+                             <div className="text-[10px] font-mono text-primary font-bold mt-2">
+                               {((mostLikelyWinner.wins + mostLikelyRunnerUp.wins) / 1.5).toFixed(1)}% Comp. Probability
+                             </div>
+                           </>
+                         ) : (
+                           <div className="text-xs text-slate-400 mt-2">Run simulation to view final.</div>
+                         )}
                        </div>
                        
                        <div className="p-4 bg-secondary/30 rounded-xl border border-white/5">
-                         <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-1">Golden Boot Index</div>
-                         <div className="flex flex-col gap-2 mt-3 text-xs">
-                           <div className="flex justify-between items-center"><span className="font-bold text-white">K. Mbappé</span> <span className="font-mono text-primary">18.5%</span></div>
-                           <div className="flex justify-between items-center"><span className="font-bold text-slate-400">L. Messi</span> <span className="font-mono text-slate-400">14.1%</span></div>
-                         </div>
+                         <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-1">Top Contender Stats</div>
+                         {mostLikelyWinner ? (
+                           <div className="flex flex-col gap-2 mt-3 text-xs">
+                             <div className="flex justify-between items-center"><span className="font-bold text-white">Reach R16</span> <span className="font-mono text-primary">{mostLikelyWinner.r16}%</span></div>
+                             <div className="flex justify-between items-center"><span className="font-bold text-slate-400">Reach Quarter</span> <span className="font-mono text-slate-400">{mostLikelyWinner.quarter}%</span></div>
+                           </div>
+                         ) : (
+                           <div className="text-xs text-slate-400 mt-2">Run simulation to view stats.</div>
+                         )}
                        </div>
                     </div>
                   </TabsContent>
 
                   <TabsContent value="scenarios" className="m-0 h-full animate-in fade-in duration-500">
                     <div className="space-y-6">
-                      <h3 className="text-xs font-black uppercase tracking-widest text-slate-300">Phase Probabilities</h3>
+                      <h3 className="text-xs font-black uppercase tracking-widest text-slate-300">Phase Probabilities (Top 12)</h3>
                       <div className="w-full overflow-x-auto">
                         <table className="w-full text-left text-xs min-w-[500px]">
                           <thead>
                             <tr className="border-b border-border/50 text-[9px] text-slate-500 uppercase tracking-wider">
                               <th className="pb-3 w-32">Team</th>
+                              <th className="pb-3 text-center">R32</th>
                               <th className="pb-3 text-center">R16</th>
                               <th className="pb-3 text-center">QF</th>
                               <th className="pb-3 text-center">SF</th>
@@ -315,30 +419,19 @@ function simMatch(teamA, teamB, eloA, eloB) {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-border/50 font-mono text-[10px]">
-                            <tr className="hover:bg-white/5 cursor-pointer">
-                              <td className="py-3 flex items-center gap-2 font-sans text-white font-bold text-xs"><img src="https://flagcdn.com/w20/ar.png" className="w-4 h-3 rounded-[2px]"/> Argentina</td>
-                              <td className="py-3 text-center text-slate-300">95.2%</td>
-                              <td className="py-3 text-center text-slate-300">72.1%</td>
-                              <td className="py-3 text-center text-slate-300">48.5%</td>
-                              <td className="py-3 text-center text-slate-300">28.4%</td>
-                              <td className="py-3 text-center font-bold text-primary">16.4%</td>
-                            </tr>
-                            <tr className="hover:bg-white/5 cursor-pointer">
-                              <td className="py-3 flex items-center gap-2 font-sans text-white font-bold text-xs"><img src="https://flagcdn.com/w20/fr.png" className="w-4 h-3 rounded-[2px]"/> France</td>
-                              <td className="py-3 text-center text-slate-300">92.8%</td>
-                              <td className="py-3 text-center text-slate-300">68.4%</td>
-                              <td className="py-3 text-center text-slate-300">45.2%</td>
-                              <td className="py-3 text-center text-slate-300">24.1%</td>
-                              <td className="py-3 text-center font-bold text-blue-400">14.2%</td>
-                            </tr>
-                            <tr className="hover:bg-white/5 cursor-pointer">
-                              <td className="py-3 flex items-center gap-2 font-sans text-white font-bold text-xs"><img src="https://flagcdn.com/w20/gb-eng.png" className="w-4 h-3 rounded-[2px]"/> England</td>
-                              <td className="py-3 text-center text-slate-300">89.5%</td>
-                              <td className="py-3 text-center text-slate-300">62.0%</td>
-                              <td className="py-3 text-center text-slate-300">38.7%</td>
-                              <td className="py-3 text-center text-slate-300">18.5%</td>
-                              <td className="py-3 text-center font-bold text-blue-400">12.1%</td>
-                            </tr>
+                            {simulationResults && simulationResults.slice(0, 12).map((team) => (
+                              <tr key={team.teamId} className="hover:bg-white/5 cursor-pointer">
+                                <td className="py-3 flex items-center gap-2 font-sans text-white font-bold text-xs">
+                                  <img src={`https://flagcdn.com/w20/${team.flag_code.toLowerCase()}.png`} className="w-4 h-3 rounded-[2px]" alt={team.name}/> {team.name}
+                                </td>
+                                <td className="py-3 text-center text-slate-300">{team.r32}%</td>
+                                <td className="py-3 text-center text-slate-300">{team.r16}%</td>
+                                <td className="py-3 text-center text-slate-300">{team.quarter}%</td>
+                                <td className="py-3 text-center text-slate-300">{team.semi}%</td>
+                                <td className="py-3 text-center text-slate-300">{team.final}%</td>
+                                <td className="py-3 text-center font-bold text-primary">{team.wins}%</td>
+                              </tr>
+                            ))}
                           </tbody>
                         </table>
                       </div>
@@ -351,48 +444,41 @@ function simMatch(teamA, teamB, eloA, eloB) {
                         <h3 className="text-xs font-black uppercase tracking-widest text-orange-400 flex items-center gap-2">
                           <ShieldAlert className="w-4 h-4"/> Statistical Anomalies
                         </h3>
-                        <p className="text-[9px] text-slate-500 uppercase mt-1">High-variance scenarios detected in simulation (&gt;2% freq)</p>
+                        <p className="text-[9px] text-slate-500 uppercase mt-1">Underdogs with favorable path (&gt;3% semifinal chance)</p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                       <div className="p-4 border border-orange-500/20 bg-orange-500/5 rounded-xl block hover:bg-orange-500/10 transition-colors">
-                         <div className="flex items-start justify-between">
-                           <div className="flex items-center gap-3">
-                             <img src="https://flagcdn.com/w40/ma.png" className="w-8 h-5.5 rounded shadow-sm" alt="MAR"/>
-                             <div>
-                               <div className="text-xs font-black text-white uppercase">Morocco to Semis</div>
-                               <div className="text-[10px] text-orange-400/80 font-bold">Dark Horse Alert</div>
-                             </div>
-                           </div>
-                           <span className="text-xl font-mono font-bold text-orange-400">8.4%</span>
-                         </div>
-                         <p className="text-[10px] text-slate-400 mt-3 leading-relaxed">Model identifies a favorable bracket path if they win Group F, avoiding UEFA giants until Quarterfinals.</p>
-                       </div>
-
-                       <div className="p-4 border border-red-500/20 bg-red-500/5 rounded-xl block hover:bg-red-500/10 transition-colors">
-                         <div className="flex items-start justify-between">
-                           <div className="flex items-center gap-3">
-                             <img src="https://flagcdn.com/w40/es.png" className="w-8 h-5.5 rounded shadow-sm" alt="ESP"/>
-                             <div>
-                               <div className="text-xs font-black text-white uppercase">Spain Group Exit</div>
-                               <div className="text-[10px] text-red-400/80 font-bold">Vulnerability Detected</div>
-                             </div>
-                           </div>
-                           <span className="text-xl font-mono font-bold text-red-500">4.1%</span>
-                         </div>
-                         <p className="text-[10px] text-slate-400 mt-3 leading-relaxed">High variance in expected goals against deep defense lines reduces their output efficiency in 4 out of 100 runs.</p>
-                       </div>
+                      {anomalies.length > 0 ? (
+                        anomalies.map((team) => (
+                          <div key={team.teamId} className="p-4 border border-orange-500/20 bg-orange-500/5 rounded-xl block hover:bg-orange-500/10 transition-colors">
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-center gap-3">
+                                <img src={`https://flagcdn.com/w40/${team.flag_code.toLowerCase()}.png`} className="w-8 h-5.5 rounded shadow-sm" alt={team.name}/>
+                                <div>
+                                  <div className="text-xs font-black text-white uppercase">{team.name} to Semis</div>
+                                  <div className="text-[10px] text-orange-400/80 font-bold">FIFA Rank: {team.fifa_rank}</div>
+                                </div>
+                              </div>
+                              <span className="text-xl font-mono font-bold text-orange-400">{team.semi}%</span>
+                            </div>
+                            <p className="text-[10px] text-slate-400 mt-3 leading-relaxed">Model identifies high variance and strong simulation trajectories. Under certain group-stage distributions, they escape top-tier seeds until the Semifinals.</p>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="col-span-2 p-4 text-center border border-dashed border-border rounded-xl text-slate-500 text-xs">
+                          No significant anomalies detected in this run. Higher weights for fatigue or momentum can induce underdogs volatility.
+                        </div>
+                      )}
                     </div>
                   </TabsContent>
 
                   <TabsContent value="code" className="m-0 h-full animate-in fade-in duration-500 flex flex-col">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-xs font-black uppercase tracking-widest text-slate-300">Core Simulation Logic</h3>
-                      <Badge variant="outline" className="text-[9px] font-mono border-white/10 text-slate-500">src/engine/monte-carlo.ts</Badge>
+                      <Badge variant="outline" className="text-[9px] font-mono border-white/10 text-slate-500">src/utils/simulatorEngine.ts</Badge>
                     </div>
                     <div className="flex-1 bg-black/60 border border-white/10 rounded-xl overflow-hidden flex flex-col">
-                      {/* Fake Mac terminal header */}
                       <div className="h-8 bg-white/5 border-b border-white/5 flex items-center px-4 gap-2 shrink-0">
                          <div className="w-2.5 h-2.5 rounded-full bg-red-500/50"></div>
                          <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50"></div>
@@ -414,7 +500,6 @@ function simMatch(teamA, teamB, eloA, eloB) {
   );
 }
 
-// Temporary badge mock for the code file
 function Badge({ children, className, variant }: any) {
-  return <span className={`px-2 py-0.5 rounded ${className}`}>{children}</span>
+  return <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${className}`}>{children}</span>
 }

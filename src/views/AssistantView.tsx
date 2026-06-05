@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { Bot, Send, User, Sparkles, BrainCircuit, Activity, Calculator, RefreshCcw, Database, FileText, ChevronRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useTeams, useMatches } from '../hooks/useData';
+import { GoogleGenAI } from '@google/genai';
 
 type Message = {
   id: string;
@@ -12,6 +14,9 @@ type Message = {
 };
 
 export function AssistantView() {
+  const { teams, loading: teamsLoading } = useTeams();
+  const { matches, loading: matchesLoading } = useMatches();
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -23,55 +28,94 @@ export function AssistantView() {
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Initialize Gemini API client if API key is configured
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+  const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isTyping]);
 
-  const handleSend = () => {
+  // Construct context representation for the prompt
+  const contextPrompt = `
+You are the Tactical Assistant for the World Cup 2026.
+Here is the current state of the database:
+- Teams:
+${teams.map(t => `${t.name} (Code: ${t.code}, Group: ${t.group_name || 'TBD'}, FIFA Rank: ${t.fifa_rank || 'TBD'})`).join('\n')}
+
+- Matches:
+${matches.map(m => {
+  const home = teams.find(t => t.id === m.home_team_id)?.name || 'TBD';
+  const away = teams.find(t => t.id === m.away_team_id)?.name || 'TBD';
+  return `${m.stage}: ${home} vs ${away} (Status: ${m.status}, Score: ${m.home_score !== null ? m.home_score : '-'}-${m.away_score !== null ? m.away_score : '-'})`;
+}).join('\n')}
+
+Use this data to answer the user's question. If they ask "what if" or about simulation probabilities, answer based on the statistical rules and encourage them to check the "Digital Twin" or "Monte Carlo Engine" views.
+Answer in Spanish as the default language, keeping it tactical, precise, and professional.
+`;
+
+  const handleSend = async () => {
     if (!inputValue.trim()) return;
 
+    const userMsgText = inputValue;
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: inputValue
+      content: userMsgText
     };
 
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
     setIsTyping(true);
 
-    // Mock AI response logic
-    setTimeout(() => {
-      setIsTyping(false);
-      
-      let aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: ''
-      };
+    let aiResponse: Message = {
+      id: (Date.now() + 1).toString(),
+      role: 'assistant',
+      content: ''
+    };
 
-      const lowerInput = userMessage.content.toLowerCase();
+    const lowerInput = userMsgText.toLowerCase();
+    if (lowerInput.includes('clasifica') || lowerInput.includes('necesita') || lowerInput.includes('empata')) {
+      aiResponse.isWidget = true;
+      aiResponse.widgetType = 'standings';
+    } else if (lowerInput.includes('favorito') || lowerInput.includes('probabilidad') || lowerInput.includes('simulaciones')) {
+      aiResponse.isWidget = true;
+      aiResponse.widgetType = 'simulation';
+    } else if (lowerInput.includes('comparar') || lowerInput.includes('vs')) {
+      aiResponse.isWidget = true;
+      aiResponse.widgetType = 'comparison';
+    }
 
-      if (lowerInput.includes('clasifica') || lowerInput.includes('necesita') || lowerInput.includes('empata')) {
-        aiResponse.content = 'He ejecutado el motor de reglas (WASM) para el Grupo A. Si Argentina empata con México, llegarían a 4 puntos. Necesitarían que Canadá venza o empate con Perú para asegurar el segundo lugar del grupo. Aquí tienes la tabla calculada en vivo:';
-        aiResponse.isWidget = true;
-        aiResponse.widgetType = 'standings';
-      } else if (lowerInput.includes('favorito') || lowerInput.includes('probabilidad') || lowerInput.includes('simulaciones')) {
-        aiResponse.content = 'Basado en 1,000,000 iteraciones del motor Monte Carlo actualizadas hasta hace 5 minutos, este es el análisis predictivo actual para el campeonato. Francia se ha posicionado como el nuevo líder estadístico.';
-        aiResponse.isWidget = true;
-        aiResponse.widgetType = 'simulation';
-      } else if (lowerInput.includes('comparar') || lowerInput.includes('vs')) {
-        aiResponse.content = 'He cruzado los datos técnicos y tácticos. España domina en retención y pases progresivos (xP), mientras que Alemania presenta mayor intensidad en presión alta (PPDA) y transiciones rápidas.';
-        aiResponse.isWidget = true;
-        aiResponse.widgetType = 'comparison';
+    try {
+      if (ai) {
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: contextPrompt + `\n\nPregunta del usuario: ${userMsgText}`
+        });
+        aiResponse.content = response.text || 'No pude generar una respuesta.';
       } else {
-        aiResponse.content = 'He consultado la base de datos histórica (RAG). Entiendo lo que dices. Puedo correr una simulación si lo deseas, u obtener estadísticas de jugadores específicos.';
+        // Fallback response with warning
+        let mockText = 'He consultado la base de datos táctica. ';
+        if (aiResponse.widgetType === 'standings') {
+          mockText += 'Si analizamos el Grupo A, los equipos clasificados dependerán de los puntos y la diferencia de goles. Aquí tienes la tabla calculada en vivo:';
+        } else if (aiResponse.widgetType === 'simulation') {
+          mockText += 'Según nuestras simulaciones Monte Carlo locales, los equipos favoritos muestran curvas de probabilidad estables. Aquí tienes el análisis de probabilidades:';
+        } else if (aiResponse.widgetType === 'comparison') {
+          mockText += 'Cruzando datos técnicos y xG de los equipos seleccionados, se aprecian tendencias claras de dominio territorial. Aquí tienes el desglose visual:';
+        } else {
+          mockText += 'Para habilitar las respuestas tácticas generadas por el modelo Gemini en tiempo real, por favor añade `VITE_GEMINI_API_KEY` a tu archivo `.env` local. Mientras tanto, puedes explorar las vistas del simulador y digital twin.';
+        }
+        aiResponse.content = mockText;
       }
-
+    } catch (err: any) {
+      console.error('Error calling Gemini API:', err);
+      aiResponse.content = `Error al consultar Gemini API: ${err.message || err}. Usando respuestas locales de respaldo.`;
+    } finally {
+      setIsTyping(false);
       setMessages(prev => [...prev, aiResponse]);
-    }, 1500);
+    }
   };
 
   return (
@@ -101,6 +145,11 @@ export function AssistantView() {
                   <Badge variant="outline" className="text-[9px] font-mono border-white/10 text-slate-400 gap-1"><Calculator className="w-3 h-3 text-orange-400"/> WASM Engine</Badge>
                </div>
              </div>
+             {!apiKey && (
+               <Badge className="text-[8px] uppercase bg-amber-500/20 text-amber-400 border-amber-500/30">
+                 API Key Missing
+               </Badge>
+             )}
           </div>
 
           {/* Messages */}

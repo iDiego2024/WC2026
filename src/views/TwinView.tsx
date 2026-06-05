@@ -1,38 +1,166 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Layers, RefreshCcw, Save, ChevronRight, Activity, TrendingUp, Trophy, GitBranch, PlayCircle, Settings2, ShieldAlert } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useMatches } from '../hooks/useData';
+import { useTeams, useMatches } from '../hooks/useData';
+import { runMonteCarlo } from '../utils/simulatorEngine';
 
 export function TwinView() {
   const [twinName, setTwinName] = useState('My Chaos Scenario #1');
   const [isCalculating, setIsCalculating] = useState(false);
+  const { teams, loading: teamsLoading } = useTeams();
   const { matches, loading: matchesLoading } = useMatches();
   
   // State for editable scores in our "Twin" universe.
-  // Pre-seed with actual data structure for the first 2 matches.
-  const [overrides, setOverrides] = useState<Record<string, { h: string, a: string }>>({
-    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa': { h: '2', a: '1' }
-  });
+  const [overrides, setOverrides] = useState<Record<string, { h: string, a: string }>>({});
+  const [baselineResults, setBaselineResults] = useState<any[] | null>(null);
+  const [simulationResults, setSimulationResults] = useState<any[] | null>(null);
+
+  // Compute baseline once data is loaded
+  useEffect(() => {
+    if (teams.length > 0 && matches.length > 0 && !baselineResults) {
+      const teamSims = teams.map(t => ({
+        id: t.id,
+        code: t.code,
+        name: t.name,
+        flag_code: t.flag_code,
+        group_name: t.group_name || 'A',
+        fifa_rank: t.fifa_rank || 50,
+        strength: Math.max(10, 100 - (t.fifa_rank || 50) * 0.85)
+      }));
+      const matchSims = matches.map(m => ({
+        id: m.id,
+        home_team_id: m.home_team_id,
+        away_team_id: m.away_team_id,
+        group_name: m.group_name,
+        stage: m.stage,
+        status: m.status,
+        home_score: m.home_score,
+        away_score: m.away_score
+      }));
+      
+      const baseRes = runMonteCarlo(teamSims, matchSims, {}, 1000);
+      setBaselineResults(baseRes);
+      setSimulationResults(baseRes);
+    }
+  }, [teams, matches, baselineResults]);
 
   const handleRecalculate = () => {
+    if (teams.length === 0 || matches.length === 0) return;
     setIsCalculating(true);
+    
     setTimeout(() => {
+      const teamSims = teams.map(t => ({
+        id: t.id,
+        code: t.code,
+        name: t.name,
+        flag_code: t.flag_code,
+        group_name: t.group_name || 'A',
+        fifa_rank: t.fifa_rank || 50,
+        strength: Math.max(10, 100 - (t.fifa_rank || 50) * 0.85)
+      }));
+      const matchSims = matches.map(m => ({
+        id: m.id,
+        home_team_id: m.home_team_id,
+        away_team_id: m.away_team_id,
+        group_name: m.group_name,
+        stage: m.stage,
+        status: m.status,
+        home_score: m.home_score,
+        away_score: m.away_score
+      }));
+
+      const res = runMonteCarlo(teamSims, matchSims, overrides, 1000);
+      setSimulationResults(res);
       setIsCalculating(false);
-    }, 1500);
+    }, 800);
   };
 
   const handleScoreChange = (matchId: string, side: 'h' | 'a', value: string) => {
     setOverrides(prev => ({
       ...prev,
       [matchId]: {
-        ...prev[matchId],
+        ...prev[matchId] || { h: '', a: '' },
         [side]: value
       }
     }));
   };
 
-  if (matchesLoading) {
+  const getDivergence = () => {
+    if (!baselineResults || !simulationResults) return { gainers: [], fallers: [] };
+    
+    const diffs = simulationResults.map(sim => {
+      const base = baselineResults.find(b => b.teamId === sim.teamId);
+      const baseProb = base ? base.wins : 0;
+      const diff = parseFloat((sim.wins - baseProb).toFixed(1));
+      return {
+        ...sim,
+        diff,
+        baseProb
+      };
+    });
+
+    const gainers = diffs.filter(d => d.diff > 0).sort((a, b) => b.diff - a.diff).slice(0, 3);
+    const fallers = diffs.filter(d => d.diff < 0).sort((a, b) => a.diff - b.diff).slice(0, 3);
+
+    return { gainers, fallers };
+  };
+
+  const getGroupStandings = (groupLetter: string) => {
+    const groupTeams = teams.filter(t => t.group_name === groupLetter);
+    const groupMatches = matches.filter(m => m.group_name === groupLetter && m.stage === 'Group Stage');
+
+    const standings = groupTeams.map(t => ({
+      id: t.id,
+      name: t.name,
+      flag_code: t.flag_code,
+      played: 0,
+      gd: 0,
+      points: 0
+    }));
+
+    groupMatches.forEach(m => {
+      const homeId = m.home_team_id;
+      const awayId = m.away_team_id;
+      if (!homeId || !awayId) return;
+
+      const override = overrides[m.id];
+      let homeScore = m.home_score;
+      let awayScore = m.away_score;
+      let isPlayed = m.status === 'finished' && homeScore !== null && awayScore !== null;
+
+      if (override && override.h !== '' && override.a !== '') {
+        homeScore = parseInt(override.h) || 0;
+        awayScore = parseInt(override.a) || 0;
+        isPlayed = true;
+      }
+
+      if (!isPlayed) return;
+
+      const homeTeam = standings.find(s => s.id === homeId);
+      const awayTeam = standings.find(s => s.id === awayId);
+
+      if (homeTeam && awayTeam) {
+        homeTeam.played++;
+        awayTeam.played++;
+        homeTeam.gd += (homeScore - awayScore);
+        awayTeam.gd += (awayScore - homeScore);
+
+        if (homeScore > awayScore) {
+          homeTeam.points += 3;
+        } else if (homeScore < awayScore) {
+          awayTeam.points += 3;
+        } else {
+          homeTeam.points += 1;
+          awayTeam.points += 1;
+        }
+      }
+    });
+
+    return standings.sort((a, b) => b.points - a.points || b.gd - a.gd || a.name.localeCompare(b.name));
+  };
+
+  if (matchesLoading || teamsLoading) {
     return (
       <div className="h-full flex items-center justify-center min-h-[400px]">
         <RefreshCcw className="w-8 h-8 animate-spin text-primary" />
@@ -40,8 +168,9 @@ export function TwinView() {
     );
   }
 
-  // Filter first 4 matches for sandbox
-  const displayMatches = matches.slice(0, 4);
+  // Display Group A matches for direct edit and instant feedback
+  const displayMatches = matches.filter(m => m.group_name === 'A' && m.stage === 'Group Stage').slice(0, 6);
+  const { gainers, fallers } = getDivergence();
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] animate-in fade-in duration-500 pb-4">
@@ -64,7 +193,7 @@ export function TwinView() {
           <Button 
             size="sm" 
             onClick={handleRecalculate}
-            disabled={isCalculating}
+            disabled={isCalculating || teams.length === 0}
             className={`h-8 text-[10px] font-bold uppercase ${isCalculating ? 'bg-secondary text-primary' : ''}`}
           >
             {isCalculating ? <RefreshCcw className="w-3 h-3 mr-2 animate-spin" /> : <PlayCircle className="w-3 h-3 mr-2" />}
@@ -86,52 +215,52 @@ export function TwinView() {
               <Badge variant="outline" className="text-[9px] font-mono border-blue-500/30 text-blue-400 bg-blue-500/10">Active Fork</Badge>
             </div>
             <div className="p-4 space-y-4">
-              <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-2">Group Stage Results</div>
+              <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-2">Group Stage Results (Group A)</div>
               
-              {displayMatches.map((match) => {
-                const home = match.home_team;
-                const away = match.away_team;
-                if (!home || !away) return null;
+              {displayMatches.length > 0 ? (
+                displayMatches.map((match) => {
+                  const home = teams.find(t => t.id === match.home_team_id);
+                  const away = teams.find(t => t.id === match.away_team_id);
+                  if (!home || !away) return null;
 
-                const matchState = overrides[match.id] || { h: '', a: '' };
-                const isOverridden = overrides[match.id] !== undefined;
+                  const matchState = overrides[match.id] || { h: '', a: '' };
+                  const isOverridden = overrides[match.id] !== undefined;
 
-                return (
-                  <div key={match.id} className={`flex items-center justify-between p-2 rounded-lg border ${isOverridden ? 'bg-primary/5 border-primary/30' : 'bg-secondary/50 border-white/5'} transition-colors`}>
-                    <div className="flex items-center gap-2 w-24">
-                      <img src={`https://flagcdn.com/w20/${home.flag_code.toLowerCase()}.png`} className="w-4 h-3 rounded-[2px]" alt={home.name} />
-                      <span className="text-[11px] font-bold text-white truncate">{home.name}</span>
+                  return (
+                    <div key={match.id} className={`flex items-center justify-between p-2 rounded-lg border ${isOverridden ? 'bg-primary/5 border-primary/30' : 'bg-secondary/50 border-white/5'} transition-colors`}>
+                      <div className="flex items-center gap-2 w-24">
+                        <img src={`https://flagcdn.com/w20/${home.flag_code.toLowerCase()}.png`} className="w-4 h-3 rounded-[2px]" alt={home.name} />
+                        <span className="text-[11px] font-bold text-white truncate">{home.name}</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <input 
+                          type="text" 
+                          value={matchState.h}
+                          onChange={(e) => handleScoreChange(match.id, 'h', e.target.value)}
+                          className={`w-8 h-8 rounded text-center font-mono font-black text-sm border-2 focus:outline-none transition-colors ${isOverridden ? 'bg-background border-primary text-primary' : 'bg-background border-border text-white focus:border-slate-400'}`}
+                          placeholder={match.home_score !== null ? String(match.home_score) : "-"}
+                        />
+                        <span className="text-slate-500 font-mono text-[10px]">vs</span>
+                        <input 
+                          type="text" 
+                          value={matchState.a}
+                          onChange={(e) => handleScoreChange(match.id, 'a', e.target.value)}
+                           className={`w-8 h-8 rounded text-center font-mono font-black text-sm border-2 focus:outline-none transition-colors ${isOverridden ? 'bg-background border-primary text-primary' : 'bg-background border-border text-white focus:border-slate-400'}`}
+                          placeholder={match.away_score !== null ? String(match.away_score) : "-"}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-end gap-2 w-24">
+                        <span className="text-[11px] font-bold text-white text-right truncate">{away.name}</span>
+                        <img src={`https://flagcdn.com/w20/${away.flag_code.toLowerCase()}.png`} className="w-4 h-3 rounded-[2px]" alt={away.name} />
+                      </div>
                     </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <input 
-                        type="text" 
-                        value={matchState.h}
-                        onChange={(e) => handleScoreChange(match.id, 'h', e.target.value)}
-                        className={`w-8 h-8 rounded text-center font-mono font-black text-sm border-2 focus:outline-none transition-colors ${isOverridden ? 'bg-background border-primary text-primary' : 'bg-background border-border text-white focus:border-slate-400'}`}
-                        placeholder="-"
-                      />
-                      <span className="text-slate-500 font-mono text-[10px]">vs</span>
-                      <input 
-                        type="text" 
-                        value={matchState.a}
-                        onChange={(e) => handleScoreChange(match.id, 'a', e.target.value)}
-                         className={`w-8 h-8 rounded text-center font-mono font-black text-sm border-2 focus:outline-none transition-colors ${isOverridden ? 'bg-background border-primary text-primary' : 'bg-background border-border text-white focus:border-slate-400'}`}
-                        placeholder="-"
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-end gap-2 w-24">
-                      <span className="text-[11px] font-bold text-white text-right truncate">{away.name}</span>
-                      <img src={`https://flagcdn.com/w20/${away.flag_code.toLowerCase()}.png`} className="w-4 h-3 rounded-[2px]" alt={away.name} />
-                    </div>
-                  </div>
-                )
-              })}
-
-              <Button variant="ghost" className="w-full text-[9px] uppercase font-bold text-slate-400 hover:text-white h-8 border border-dashed border-border mt-2">
-                Load More Matches...
-              </Button>
+                  );
+                })
+              ) : (
+                <div className="text-xs text-slate-500 italic p-2 text-center">No Group A matches found. Seed the database first.</div>
+              )}
             </div>
           </div>
 
@@ -186,36 +315,41 @@ export function TwinView() {
                     </tr>
                   </thead>
                   <tbody className="font-mono text-[11px] divide-y divide-border/50">
-                    <tr className="bg-emerald-500/10">
-                      <td className="py-2.5 font-sans font-bold text-emerald-400 flex items-center gap-2"><div className="w-1 h-3 bg-emerald-500 rounded-full"></div> 1. Canada (Q)</td>
-                      <td className="py-2.5 text-center text-white">3</td>
-                      <td className="py-2.5 text-center text-white">+2</td>
-                      <td className="py-2.5 text-center font-black text-white">7</td>
-                    </tr>
-                    <tr className="bg-emerald-500/5">
-                      <td className="py-2.5 font-sans font-bold text-white flex items-center gap-2"><div className="w-1 h-3 bg-emerald-500/50 rounded-full"></div> 2. Argentina (Q)</td>
-                      <td className="py-2.5 text-center text-slate-300">3</td>
-                      <td className="py-2.5 text-center text-slate-300">+1</td>
-                      <td className="py-2.5 text-center font-black text-white">6</td>
-                    </tr>
-                    <tr className="opacity-50 grayscale hover:grayscale-0 transition-all">
-                      <td className="py-2.5 font-sans font-bold text-slate-300 flex items-center gap-2"><div className="w-1 h-3 bg-red-500/50 rounded-full"></div> 3. Mexico</td>
-                      <td className="py-2.5 text-center text-slate-400">3</td>
-                      <td className="py-2.5 text-center text-slate-400">-1</td>
-                      <td className="py-2.5 text-center font-bold text-slate-300">4</td>
-                    </tr>
+                    {teams.length > 0 ? (
+                      getGroupStandings('A').map((team, idx) => {
+                        const isQual = idx < 2;
+                        return (
+                          <tr key={team.id} className={isQual ? (idx === 0 ? "bg-emerald-500/10" : "bg-emerald-500/5") : "opacity-75 grayscale hover:grayscale-0 transition-all"}>
+                            <td className="py-2.5 font-sans font-bold text-white flex items-center gap-2">
+                              <div className={`w-1.5 h-1.5 rounded-full ${isQual ? 'bg-emerald-500' : 'bg-slate-505'}`}></div>
+                              <img src={`https://flagcdn.com/w20/${team.flag_code.toLowerCase()}.png`} className="w-4 h-3 rounded-[2px]" alt={team.name}/>
+                              {idx + 1}. {team.name} {isQual ? '(Q)' : ''}
+                            </td>
+                            <td className="py-2.5 text-center text-white">{team.played}</td>
+                            <td className="py-2.5 text-center text-white">{team.gd > 0 ? `+${team.gd}` : team.gd}</td>
+                            <td className="py-2.5 text-center font-black text-white">{team.points}</td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan={4} className="py-4 text-center text-slate-500 italic">No teams loaded.</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
              </div>
 
              <div className="bg-card rounded-xl border border-border p-4 flex flex-col justify-center gap-4">
-                <div className="flex items-center gap-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                  <div className="w-10 h-10 rounded-full bg-red-500/20 flex flex-col items-center justify-center shrink-0">
-                    <ShieldAlert className="w-5 h-5 text-red-500" />
+                <div className="flex items-center gap-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                  <div className="w-10 h-10 rounded-full bg-blue-500/20 flex flex-col items-center justify-center shrink-0">
+                    <ShieldAlert className="w-5 h-5 text-blue-400" />
                   </div>
                   <div>
-                    <div className="text-[10px] font-black uppercase text-red-400 tracking-widest">Butterfly Effect Divergence</div>
-                    <div className="text-xs text-slate-300 mt-1 leading-relaxed">By forcing <span className="font-bold text-white">CAN 2-1 ARG</span>, Argentina drops to 2nd place in Group A, pushing them into the other side of the knockout bracket.</div>
+                    <div className="text-[10px] font-black uppercase text-blue-400 tracking-widest">Butterfly Effect Divergence</div>
+                    <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                      Override results to see how group outcomes shift the bracket, updating dynamic championship probabilities.
+                    </p>
                   </div>
                 </div>
              </div>
@@ -225,6 +359,7 @@ export function TwinView() {
           <div className="bg-card rounded-xl border border-border flex flex-col flex-1">
              <div className="p-4 border-b border-border/50 flex items-center justify-between bg-secondary/30">
                <h3 className="text-[10px] font-black uppercase text-white tracking-widest flex items-center gap-2">
+                 <img src="https://flagcdn.com/w20/us.png" className="w-4 h-3 rounded-[2px] hidden" alt="US"/>
                  <Activity className="w-3.5 h-3.5 text-emerald-400" /> AI Championship Probability Matrix
                </h3>
                <Badge className="text-[8px] uppercase font-mono tracking-wider">Post-Recalculation</Badge>
@@ -233,47 +368,48 @@ export function TwinView() {
              <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-8">
                 
                 <div className="space-y-4">
-                  <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 border-b border-border/50 pb-2">New Favourites</h4>
-                  {[
-                    { name: 'France', flag: 'fr', prob: 18.2, trend: '+4.0%', up: true },
-                    { name: 'Brazil', flag: 'br', prob: 15.5, trend: '+3.7%', up: true },
-                    { name: 'England', flag: 'gb-eng', prob: 12.1, trend: '0.0%', up: null },
-                  ].map((team, i) => (
-                    <div key={i} className="flex items-center justify-between group">
-                      <div className="flex items-center gap-3">
-                         <span className="text-[10px] font-black text-slate-600">{i+1}</span>
-                         <img src={`https://flagcdn.com/w20/${team.flag}.png`} className="w-5 h-3.5 rounded-[2px]" alt={team.name} />
-                         <span className="text-xs font-bold text-white">{team.name}</span>
+                  <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 border-b border-border/50 pb-2">Top Gainers</h4>
+                  {gainers.length > 0 ? (
+                    gainers.map((team, i) => (
+                      <div key={team.teamId} className="flex items-center justify-between group">
+                        <div className="flex items-center gap-3">
+                           <span className="text-[10px] font-black text-slate-600">{i+1}</span>
+                           <img src={`https://flagcdn.com/w20/${team.flag_code.toLowerCase()}.png`} className="w-5 h-3.5 rounded-[2px]" alt={team.name} />
+                           <span className="text-xs font-bold text-white">{team.name}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-mono font-bold text-emerald-400">{team.wins}%</span>
+                          <Badge className="w-14 justify-center text-[9px] font-mono border-background bg-emerald-500/20 text-emerald-400">
+                             +{team.diff}%
+                          </Badge>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-mono font-bold text-emerald-400">{team.prob}%</span>
-                        <Badge variant="outline" className={`w-14 justify-center text-[9px] font-mono border-background ${team.up ? 'bg-emerald-500/20 text-emerald-400' : 'bg-secondary text-slate-400'}`}>
-                           {team.trend}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <div className="text-xs text-slate-500 italic">No gainers detected. Run simulation.</div>
+                  )}
                 </div>
 
                 <div className="space-y-4">
                   <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 border-b border-border/50 pb-2">Top Fallers</h4>
-                  {[
-                    { name: 'Argentina', flag: 'ar', prob: 9.4, trend: '-7.0%', down: true },
-                    { name: 'Spain', flag: 'es', prob: 8.1, trend: '-1.2%', down: true },
-                  ].map((team, i) => (
-                    <div key={i} className="flex items-center justify-between group">
-                      <div className="flex items-center gap-3">
-                         <img src={`https://flagcdn.com/w20/${team.flag}.png`} className="w-5 h-3.5 rounded-[2px]" alt={team.name} />
-                         <span className="text-xs font-bold text-white opacity-80">{team.name}</span>
+                  {fallers.length > 0 ? (
+                    fallers.map((team, i) => (
+                      <div key={team.teamId} className="flex items-center justify-between group">
+                        <div className="flex items-center gap-3">
+                           <img src={`https://flagcdn.com/w20/${team.flag_code.toLowerCase()}.png`} className="w-5 h-3.5 rounded-[2px]" alt={team.name} />
+                           <span className="text-xs font-bold text-white opacity-80">{team.name}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-mono font-bold text-slate-300">{team.wins}%</span>
+                          <Badge className="w-14 justify-center text-[9px] font-mono border-background bg-red-500/20 text-red-400">
+                             {team.diff}%
+                          </Badge>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-mono font-bold text-slate-300">{team.prob}%</span>
-                        <Badge variant="outline" className={`w-14 justify-center text-[9px] font-mono border-background bg-red-500/20 text-red-400`}>
-                           {team.trend}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <div className="text-xs text-slate-500 italic">No fallers detected. Run simulation.</div>
+                  )}
                 </div>
 
              </div>
@@ -281,7 +417,7 @@ export function TwinView() {
              <div className="mt-auto p-4 border-t border-border/50 bg-secondary/10">
                <div className="flex items-center gap-2 text-[10px] text-slate-400">
                   <TrendingUp className="w-3.5 h-3.5" />
-                  <span>Model notes: Argentina's harder path significantly boosts France and Brazil's statistical chances of reaching the final.</span>
+                  <span>Model notes: Forcing results updates the bracket seeds, creating structural shifts across tournament paths.</span>
                </div>
              </div>
           </div>
