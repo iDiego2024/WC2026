@@ -50,11 +50,24 @@ BEGIN
     END IF;
 END $$;
 
--- Agregamos las tablas a la publicación de realtime de forma segura
-ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS matches;
-ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS sync_logs;
-ALTER PUBLICATION supabase_realtime ADD TABLE matches;
-ALTER PUBLICATION supabase_realtime ADD TABLE sync_logs;
+-- Agregamos las tablas a la publicación de realtime de forma segura capturando duplicados
+DO $$
+BEGIN
+    BEGIN
+        ALTER PUBLICATION supabase_realtime ADD TABLE matches;
+    EXCEPTION
+        WHEN duplicate_object THEN
+            NULL; -- Ya existía en la publicación, continuar
+    END;
+
+    BEGIN
+        ALTER PUBLICATION supabase_realtime ADD TABLE sync_logs;
+    EXCEPTION
+        WHEN duplicate_object THEN
+            NULL; -- Ya existía en la publicación, continuar
+    END;
+END $$;
+
 
 -- 5. Configurar Schedulers (Opcional - Requiere habilitar pg_cron en Dashboard)
 -- CREATE EXTENSION IF NOT EXISTS pg_cron;
