@@ -12,6 +12,7 @@ import { UniverseView } from './views/UniverseView';
 import { TwinView } from './views/TwinView';
 import { TvModeView } from './views/TvModeView';
 import { AssistantView } from './views/AssistantView';
+import { AdminStatusView } from './views/AdminStatusView';
 
 export default function App() {
   return (
@@ -31,6 +32,7 @@ export default function App() {
              <Route path="/assistant" element={<AssistantView />} />
              <Route path="/community" element={<CommunityView />} />
              <Route path="/tv" element={<TvModeView />} />
+             <Route path="/admin" element={<AdminStatusView />} />
              <Route path="/match/:id" element={<MatchDetailView />} />
           </Routes>
         </main>
@@ -38,3 +40,4 @@ export default function App() {
     </Router>
   );
 }
+

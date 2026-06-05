@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Calendar, Trophy, BarChart3, Users, MapPin, BrainCircuit, Shield, Network, Layers, Tv, Bot, Globe } from 'lucide-react';
+import { Home, Calendar, Trophy, BarChart3, Users, MapPin, BrainCircuit, Shield, Network, Layers, Tv, Bot, Globe, Activity } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useLanguage } from '../context/LanguageContext';
@@ -21,7 +21,9 @@ const getNavItems = (t: (es: string, en: string) => string) => [
   { to: '/assistant', icon: Bot, label: t('Asistente', 'Assistant') },
   { to: '/community', icon: Users, label: t('Comunidad', 'Community') },
   { to: '/tv', icon: Tv, label: t('Modo TV', 'TV Mode') },
+  { to: '/admin', icon: Activity, label: t('Data Ops', 'Data Ops') },
 ];
+
 
 export function Navigation() {
   const { lang, setLang, t } = useLanguage();
