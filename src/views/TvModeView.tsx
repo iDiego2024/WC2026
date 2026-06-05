@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tv, Trophy, Activity, Users, Clock, X, ChevronRight, TrendingUp } from 'lucide-react';
-import { MATCHES, TEAMS, GROUPS, getTeam } from "@/src/data";
+import { useMatches, useRankings, useTeams } from '../hooks/useData';
 
 export function TvModeView() {
   const navigate = useNavigate();
   const [time, setTime] = useState(new Date());
   
+  const { matches, loading: matchesLoading } = useMatches();
+  const { rankings, loading: rankingsLoading } = useRankings();
+  const { teams, loading: teamsLoading } = useTeams();
+
   // Ticker animation and clock update
   useEffect(() => {
     const timer = setInterval(() => {
@@ -15,8 +19,50 @@ export function TvModeView() {
     return () => clearInterval(timer);
   }, []);
 
+  if (matchesLoading || rankingsLoading || teamsLoading) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background text-white flex flex-col items-center justify-center gap-4">
+        <Tv className="w-12 h-12 text-primary animate-pulse" />
+        <div className="w-8 h-8 rounded-full border-t-2 border-primary animate-spin"></div>
+      </div>
+    );
+  }
+
   // Filter 4 recent/upcoming matches
-  const displayMatches = MATCHES.slice(0, 4);
+  const displayMatches = matches.slice(0, 4);
+
+  // Group A standings (computed dynamically from teams/matches)
+  const groupATeams = teams
+    .filter(t => t.group_name === 'A')
+    .map(team => {
+      let PJ = 0, PG = 0, PE = 0, PP = 0, GF = 0, GC = 0;
+      matches.forEach(match => {
+        const isFinished = match.status === 'finished';
+        const homeScore = match.home_score;
+        const awayScore = match.away_score;
+
+        if (isFinished && homeScore !== null && awayScore !== null) {
+          if (match.home_team_id === team.id || match.home_team?.id === team.id) {
+            PJ++;
+            GF += homeScore;
+            GC += awayScore;
+            if (homeScore > awayScore) PG++;
+            else if (homeScore === awayScore) PE++;
+            else PP++;
+          } else if (match.away_team_id === team.id || match.away_team?.id === team.id) {
+            PJ++;
+            GF += awayScore;
+            GC += homeScore;
+            if (awayScore > homeScore) PG++;
+            else if (awayScore === homeScore) PE++;
+            else PP++;
+          }
+        }
+      });
+      return { ...team, GD: GF - GC, Pts: PG * 3 + PE };
+    })
+    .sort((a, b) => b.Pts - a.Pts || b.GD - a.GD || a.name.localeCompare(b.name))
+    .slice(0, 4);
 
   return (
     <div className="fixed inset-0 z-50 bg-background text-white overflow-hidden flex flex-col font-sans animate-in fade-in duration-1000">
@@ -44,7 +90,7 @@ export function TvModeView() {
         </div>
       </header>
 
-      {/* Main Grid Grid - 3 columns */}
+      {/* Main Grid - 3 columns */}
       <div className="flex-1 min-h-0 grid grid-cols-12 gap-6 p-6 pb-20">
         
         {/* Col 1: Matches & Results */}
@@ -60,38 +106,43 @@ export function TvModeView() {
             </div>
             
             <div className="p-5 flex-1 flex flex-col justify-between">
-              {displayMatches.map((match, i) => {
-                const home = getTeam(match.homeTeamId);
-                const away = getTeam(match.awayTeamId);
-                const isLive = match.status === 'LIVE';
-                
-                return (
-                  <div key={i} className="bg-background border border-white/5 rounded-xl p-4 flex items-center justify-between">
-                     <div className="flex flex-col items-center gap-2 w-28">
-                       <img src={`https://flagcdn.com/w80/${home?.flagCode.toLowerCase()}.png`} className="w-12 h-8 rounded shadow-lg" alt={home?.name} />
-                       <span className="text-sm font-bold uppercase text-slate-300 truncate w-full text-center">{home?.name}</span>
-                     </div>
-                     
-                     <div className="flex flex-col items-center">
-                       {isLive ? (
-                         <div className="text-xs font-bold text-red-400 mb-1 animate-pulse uppercase tracking-widest">72'</div>
-                       ) : (
-                         <div className="text-xs font-bold text-slate-500 mb-1 uppercase tracking-widest">FT</div>
-                       )}
-                       <div className="flex items-center gap-3 text-4xl font-mono font-black text-white">
-                         <span>{match.homeScore ?? '-'}</span>
-                         <span className="text-slate-600">-</span>
-                         <span>{match.awayScore ?? '-'}</span>
+              {displayMatches.length === 0 ? (
+                <div className="flex items-center justify-center flex-1 text-slate-500 text-xs font-bold uppercase tracking-widest">No Matches Scheduled</div>
+              ) : (
+                displayMatches.map((match, i) => {
+                  const home = match.home_team;
+                  const away = match.away_team;
+                  const isLive = match.status === 'live';
+                  if (!home || !away) return null;
+                  
+                  return (
+                    <div key={i} className="bg-background border border-white/5 rounded-xl p-4 flex items-center justify-between">
+                       <div className="flex flex-col items-center gap-2 w-28">
+                         <img src={`https://flagcdn.com/w80/${home.flag_code.toLowerCase()}.png`} className="w-12 h-8 rounded shadow-lg" alt={home.name} />
+                         <span className="text-sm font-bold uppercase text-slate-300 truncate w-full text-center">{home.name}</span>
                        </div>
-                     </div>
+                       
+                       <div className="flex flex-col items-center">
+                         {isLive ? (
+                           <div className="text-xs font-bold text-red-400 mb-1 animate-pulse uppercase tracking-widest">72'</div>
+                         ) : (
+                           <div className="text-xs font-bold text-slate-500 mb-1 uppercase tracking-widest">FT</div>
+                         )}
+                         <div className="flex items-center gap-3 text-4xl font-mono font-black text-white">
+                           <span>{match.home_score ?? '-'}</span>
+                           <span className="text-slate-600">-</span>
+                           <span>{match.away_score ?? '-'}</span>
+                         </div>
+                       </div>
 
-                     <div className="flex flex-col items-center gap-2 w-28">
-                       <img src={`https://flagcdn.com/w80/${away?.flagCode.toLowerCase()}.png`} className="w-12 h-8 rounded shadow-lg" alt={away?.name} />
-                       <span className="text-sm font-bold uppercase text-slate-300 truncate w-full text-center">{away?.name}</span>
-                     </div>
-                  </div>
-                )
-              })}
+                       <div className="flex flex-col items-center gap-2 w-28">
+                         <img src={`https://flagcdn.com/w80/${away.flag_code.toLowerCase()}.png`} className="w-12 h-8 rounded shadow-lg" alt={away.name} />
+                         <span className="text-sm font-bold uppercase text-slate-300 truncate w-full text-center">{away.name}</span>
+                       </div>
+                    </div>
+                  )
+                })
+              )}
             </div>
           </div>
         </div>
@@ -156,30 +207,22 @@ export function TvModeView() {
                     </tr>
                   </thead>
                   <tbody className="font-mono text-base divide-y divide-border/50">
-                    <tr className="bg-white/5">
-                      <td className="py-3 font-black text-emerald-400">1</td>
-                      <td className="py-3 font-sans font-bold text-white flex items-center gap-3"><img src="https://flagcdn.com/w20/ar.png" className="w-5 h-3.5 rounded-sm" alt=""/> Argentina</td>
-                      <td className="py-3 text-center text-slate-300">+4</td>
-                      <td className="py-3 text-center font-black text-white">6</td>
-                    </tr>
-                    <tr>
-                      <td className="py-3 font-black text-emerald-400">2</td>
-                      <td className="py-3 font-sans font-bold text-white flex items-center gap-3"><img src="https://flagcdn.com/w20/ca.png" className="w-5 h-3.5 rounded-sm" alt=""/> Canada</td>
-                      <td className="py-3 text-center text-slate-300">0</td>
-                      <td className="py-3 text-center font-black text-white">3</td>
-                    </tr>
-                    <tr>
-                      <td className="py-3 font-black text-slate-600">3</td>
-                      <td className="py-3 font-sans font-bold text-slate-400 flex items-center gap-3"><img src="https://flagcdn.com/w20/mx.png" className="w-5 h-3.5 rounded-sm opacity-50" alt=""/> Mexico</td>
-                      <td className="py-3 text-center text-slate-500">-1</td>
-                      <td className="py-3 text-center font-bold text-slate-400">1</td>
-                    </tr>
-                    <tr>
-                      <td className="py-3 font-black text-slate-600">4</td>
-                      <td className="py-3 font-sans font-bold text-slate-400 flex items-center gap-3"><img src="https://flagcdn.com/w20/pe.png" className="w-5 h-3.5 rounded-sm opacity-50" alt=""/> Peru</td>
-                      <td className="py-3 text-center text-slate-500">-3</td>
-                      <td className="py-3 text-center font-bold text-slate-400">1</td>
-                    </tr>
+                    {groupATeams.map((team, idx) => (
+                      <tr key={team.id} className={idx === 0 ? "bg-white/5" : ""}>
+                        <td className="py-3 font-black text-emerald-400">{idx + 1}</td>
+                        <td className="py-3 font-sans font-bold text-white flex items-center gap-3">
+                          <img src={`https://flagcdn.com/w20/${team.flag_code.toLowerCase()}.png`} className="w-5 h-3.5 rounded-sm" alt={team.name}/> 
+                          {team.name}
+                        </td>
+                        <td className="py-3 text-center text-slate-300">{team.GD >= 0 ? `+${team.GD}` : team.GD}</td>
+                        <td className="py-3 text-center font-black text-white">{team.Pts}</td>
+                      </tr>
+                    ))}
+                    {groupATeams.length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="py-4 text-center text-slate-500 text-xs font-bold uppercase">No Teams Available</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
             </div>
@@ -194,23 +237,25 @@ export function TvModeView() {
               </h2>
             </div>
             <div className="p-4 flex-1 flex flex-col justify-between">
-              {[
-                { rank: 1, name: 'Alex_Pro', pts: '12,450', avatar: 'A' },
-                { rank: 2, name: 'WorldCupKing', pts: '12,100', avatar: 'W' },
-                { rank: 3, name: 'Sarah_Goal', pts: '11,850', avatar: 'S' },
-                { rank: 4, name: 'FutbolFan99', pts: '11,200', avatar: 'F' },
-              ].map((user) => (
-                <div key={user.rank} className="flex items-center justify-between">
+              {rankings.slice(0, 4).map((p, idx) => (
+                <div key={p.id || idx} className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <span className={`text-xl font-black ${user.rank === 1 ? 'text-yellow-400' : 'text-slate-500'}`}>#{user.rank}</span>
-                    <div className="w-10 h-10 rounded-full bg-secondary border border-border flex items-center justify-center font-bold text-white text-lg">
-                      {user.avatar}
-                    </div>
-                    <span className="text-lg font-bold text-white uppercase tracking-wider">{user.name}</span>
+                    <span className={`text-xl font-black ${idx === 0 ? 'text-yellow-400' : 'text-slate-500'}`}>#{idx + 1}</span>
+                    {p.photo_url ? (
+                      <img src={p.photo_url} alt="" className="w-10 h-10 rounded-full border border-border" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-secondary border border-border flex items-center justify-center font-bold text-white text-lg">
+                        {p.display_name?.charAt(0) || 'U'}
+                      </div>
+                    )}
+                    <span className="text-lg font-bold text-white uppercase tracking-wider truncate max-w-[120px]">{p.display_name}</span>
                   </div>
-                  <span className="text-2xl font-mono font-black text-primary">{user.pts}</span>
+                  <span className="text-2xl font-mono font-black text-primary">{p.score} <span className="text-[10px] text-slate-500 font-bold uppercase">pts</span></span>
                 </div>
               ))}
+              {rankings.length === 0 && (
+                <div className="flex items-center justify-center flex-1 text-slate-500 text-xs font-bold uppercase">Leaderboard Empty</div>
+              )}
             </div>
           </div>
         </div>

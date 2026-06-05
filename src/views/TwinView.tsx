@@ -1,19 +1,18 @@
 import { useState } from 'react';
-import { Layers, RefreshCcw, Save, Play, ChevronRight, Activity, TrendingUp, Trophy, GitBranch, PlayCircle, Settings2, ShieldAlert } from 'lucide-react';
+import { Layers, RefreshCcw, Save, ChevronRight, Activity, TrendingUp, Trophy, GitBranch, PlayCircle, Settings2, ShieldAlert } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MATCHES, getTeam } from "@/src/data";
+import { useMatches } from '../hooks/useData';
 
 export function TwinView() {
-  const [activeTab, setActiveTab] = useState('editor');
   const [twinName, setTwinName] = useState('My Chaos Scenario #1');
   const [isCalculating, setIsCalculating] = useState(false);
+  const { matches, loading: matchesLoading } = useMatches();
   
   // State for editable scores in our "Twin" universe.
-  // Pre-seed with actual data structure for the first 4 matches.
-  const [overrides, setOverrides] = useState<Record<string, {h: string, a: string}>>({
-    'm1': { h: '2', a: '1' },
-    'm2': { h: '0', a: '0' },
+  // Pre-seed with actual data structure for the first 2 matches.
+  const [overrides, setOverrides] = useState<Record<string, { h: string, a: string }>>({
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa': { h: '2', a: '1' }
   });
 
   const handleRecalculate = () => {
@@ -32,6 +31,17 @@ export function TwinView() {
       }
     }));
   };
+
+  if (matchesLoading) {
+    return (
+      <div className="h-full flex items-center justify-center min-h-[400px]">
+        <RefreshCcw className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Filter first 4 matches for sandbox
+  const displayMatches = matches.slice(0, 4);
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] animate-in fade-in duration-500 pb-4">
@@ -78,17 +88,19 @@ export function TwinView() {
             <div className="p-4 space-y-4">
               <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-2">Group Stage Results</div>
               
-              {MATCHES.slice(0, 4).map((match, idx) => {
-                const home = getTeam(match.homeTeamId)!;
-                const away = getTeam(match.awayTeamId)!;
+              {displayMatches.map((match) => {
+                const home = match.home_team;
+                const away = match.away_team;
+                if (!home || !away) return null;
+
                 const matchState = overrides[match.id] || { h: '', a: '' };
                 const isOverridden = overrides[match.id] !== undefined;
 
                 return (
                   <div key={match.id} className={`flex items-center justify-between p-2 rounded-lg border ${isOverridden ? 'bg-primary/5 border-primary/30' : 'bg-secondary/50 border-white/5'} transition-colors`}>
                     <div className="flex items-center gap-2 w-24">
-                      <img src={`https://flagcdn.com/w20/${home.flagCode.toLowerCase()}.png`} className="w-4 h-3 rounded-[2px]" alt={home.name} />
-                      <span className="text-[11px] font-bold text-white">{home.name}</span>
+                      <img src={`https://flagcdn.com/w20/${home.flag_code.toLowerCase()}.png`} className="w-4 h-3 rounded-[2px]" alt={home.name} />
+                      <span className="text-[11px] font-bold text-white truncate">{home.name}</span>
                     </div>
                     
                     <div className="flex items-center gap-2">
@@ -110,8 +122,8 @@ export function TwinView() {
                     </div>
 
                     <div className="flex items-center justify-end gap-2 w-24">
-                      <span className="text-[11px] font-bold text-white text-right">{away.name}</span>
-                      <img src={`https://flagcdn.com/w20/${away.flagCode.toLowerCase()}.png`} className="w-4 h-3 rounded-[2px]" alt={away.name} />
+                      <span className="text-[11px] font-bold text-white text-right truncate">{away.name}</span>
+                      <img src={`https://flagcdn.com/w20/${away.flag_code.toLowerCase()}.png`} className="w-4 h-3 rounded-[2px]" alt={away.name} />
                     </div>
                   </div>
                 )

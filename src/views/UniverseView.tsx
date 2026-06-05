@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Network, Search, Filter, Maximize2, ZoomIn, ZoomOut, Database, History, User, Flag, Trophy, MapPin, Award, BookOpen, ChevronRight, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
