@@ -6,8 +6,70 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// ============================================================
+// SOURCE: fixturedownload.com (free, real WC2026 data)
+// ============================================================
+const ROUND_MAP: Record<number, string> = {
+  1: "Group Stage", 2: "Group Stage", 3: "Group Stage",
+  4: "Round of 32", 5: "Round of 16", 6: "Quarterfinals",
+  7: "Semifinals", 8: "Final",
+};
+
+const ISO2_MAP: Record<string, string> = {
+  "United States": "US", "USA": "US", "Canada": "CA", "Mexico": "MX",
+  "Brazil": "BR", "Argentina": "AR", "Uruguay": "UY", "Colombia": "CO",
+  "Ecuador": "EC", "Paraguay": "PY", "Venezuela": "VE", "Bolivia": "BO",
+  "Germany": "DE", "France": "FR", "Spain": "ES", "England": "GB-ENG",
+  "Portugal": "PT", "Netherlands": "NL", "Belgium": "BE", "Italy": "IT",
+  "Croatia": "HR", "Switzerland": "CH", "Austria": "AT", "Denmark": "DK",
+  "Sweden": "SE", "Norway": "NO", "Poland": "PL", "Ukraine": "UA",
+  "Turkey": "TR", "Türkiye": "TR", "Romania": "RO", "Serbia": "RS",
+  "Slovakia": "SK", "Czech Republic": "CZ", "Czechia": "CZ", "Slovenia": "SI",
+  "Albania": "AL", "Georgia": "GE", "Scotland": "GB-SCT", "Iceland": "IS",
+  "Bosnia and Herzegovina": "BA", "Hungary": "HU",
+  "Japan": "JP", "South Korea": "KR", "Korea Republic": "KR",
+  "Australia": "AU", "Iran": "IR", "IR Iran": "IR",
+  "Saudi Arabia": "SA", "Qatar": "QA", "UAE": "AE", "Iraq": "IQ",
+  "Uzbekistan": "UZ", "Jordan": "JO",
+  "Senegal": "SN", "Morocco": "MA", "Egypt": "EG", "Nigeria": "NG",
+  "Cameroon": "CM", "Ghana": "GH", "Tunisia": "TN", "Algeria": "DZ",
+  "Congo DR": "CD", "South Africa": "ZA", "Cabo Verde": "CV",
+  "Côte d'Ivoire": "CI",
+  "New Zealand": "NZ", "Panama": "PA", "Costa Rica": "CR",
+  "Honduras": "HN", "Jamaica": "JM", "Curaçao": "CW", "Haiti": "HT",
+};
+
+const STADIUM_MAP: Record<string, { name: string; city: string; capacity: number }> = {
+  "New York/New Jersey Stadium": { name: "MetLife Stadium", city: "East Rutherford, NJ", capacity: 82500 },
+  "Los Angeles Stadium": { name: "SoFi Stadium", city: "Los Angeles, CA", capacity: 70240 },
+  "Dallas Stadium": { name: "AT&T Stadium", city: "Arlington, TX", capacity: 80000 },
+  "San Francisco Bay Area Stadium": { name: "Levi's Stadium", city: "Santa Clara, CA", capacity: 68500 },
+  "Miami Stadium": { name: "Hard Rock Stadium", city: "Miami, FL", capacity: 64767 },
+  "Atlanta Stadium": { name: "Mercedes-Benz Stadium", city: "Atlanta, GA", capacity: 71000 },
+  "Seattle Stadium": { name: "Lumen Field", city: "Seattle, WA", capacity: 68740 },
+  "Houston Stadium": { name: "NRG Stadium", city: "Houston, TX", capacity: 72220 },
+  "Philadelphia Stadium": { name: "Lincoln Financial Field", city: "Philadelphia, PA", capacity: 69796 },
+  "Kansas City Stadium": { name: "Arrowhead Stadium", city: "Kansas City, MO", capacity: 76416 },
+  "Boston Stadium": { name: "Gillette Stadium", city: "Foxborough, MA", capacity: 65878 },
+  "BC Place Vancouver": { name: "BC Place", city: "Vancouver, BC", capacity: 54500 },
+  "Toronto Stadium": { name: "BMO Field", city: "Toronto, ON", capacity: 30000 },
+  "Mexico City Stadium": { name: "Estadio Azteca", city: "Mexico City, MX", capacity: 87523 },
+  "Monterrey Stadium": { name: "Estadio BBVA", city: "Monterrey, MX", capacity: 53500 },
+  "Guadalajara Stadium": { name: "Estadio Akron", city: "Guadalajara, MX", capacity: 47019 },
+};
+
+async function fetchFixturesFromWeb(): Promise<any[]> {
+  const res = await fetch("https://fixturedownload.com/feed/json/fifa-world-cup-2026", {
+    headers: { "User-Agent": "WC2026-Tracker/1.0" },
+  });
+  if (!res.ok) throw new Error(`fixturedownload.com HTTP ${res.status}`);
+  return res.json();
+}
+
+// ============================================================
+// MAIN HANDLER
+// ============================================================
 serve(async (req) => {
-  // CORS Preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -17,151 +79,102 @@ serve(async (req) => {
   let recordsUpdated = 0;
   let apiCalls = 0;
   let errorMessage = "";
+  const dataSource = "fixturedownload.com";
 
-  const supabaseUrl = Deno.env.get("SUPABASE_URL") || Deno.env.get("VITE_SUPABASE_URL") || "";
-  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("VITE_SUPABASE_ANON_KEY") || "";
-  const apiKey = Deno.env.get("RAPIDAPI_KEY") || "";
-
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
-    if (!apiKey) {
-      throw new Error("RAPIDAPI_KEY environment variable is not defined.");
-    }
-
-    // Determine request headers and URL based on key type
-    const isDirectKey = apiKey.length === 64;
-    const url = isDirectKey
-      ? "https://v3.football.api-sports.io/fixtures?league=1&season=2026"
-      : "https://api-football-v1.p.rapidapi.com/v3/fixtures?league=1&season=2026";
-    
-    const headers: Record<string, string> = isDirectKey
-      ? { "x-apisports-key": apiKey }
-      : {
-          "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
-          "x-rapidapi-key": apiKey
-        };
-
-    console.log(`Fetching fixtures from: ${url}`);
+    console.log("Fetching WC2026 fixtures from fixturedownload.com...");
     apiCalls++;
-    const response = await fetch(url, { headers });
-    if (!response.ok) {
-      throw new Error(`API returned HTTP error status: ${response.status}`);
+    const rawFixtures = await fetchFixturesFromWeb();
+    console.log(`Fetched ${rawFixtures.length} raw fixtures`);
+
+    if (!rawFixtures.length) throw new Error("No fixtures returned");
+
+    // 1. Upsert groups A-L
+    const groupEntries = ["A","B","C","D","E","F","G","H","I","J","K","L"].map(g => ({
+      id: g, name: `Grupo ${g}`
+    }));
+    await supabase.from("groups").upsert(groupEntries, { onConflict: "id" });
+
+    // 2. Upsert stadiums
+    const stadiumDbIds: Record<string, string> = {};
+    for (const [locKey, s] of Object.entries(STADIUM_MAP)) {
+      const { data } = await supabase
+        .from("stadiums")
+        .upsert({ name: s.name, city: s.city, capacity: s.capacity }, { onConflict: "name" })
+        .select("id, name").single();
+      if (data) stadiumDbIds[locKey] = data.id;
     }
 
-    const data = await response.json();
-    const fixtures = data?.response || [];
-    console.log(`Fetched ${fixtures.length} fixtures from API.`);
+    // 3. Upsert teams
+    const teamDbIds: Record<string, string> = {};
+    const teamsMap: Record<string, string | null> = {};
 
-    if (fixtures.length === 0) {
-      throw new Error("No fixtures returned by the API.");
-    }
-
-    // 1. Groups insert/upsert
-    const groups = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
-    for (const g of groups) {
-      await supabase.from('groups').upsert({ id: g, name: `Grupo ${g}` });
-    }
-
-    // 2. Process and map Stadiums & Teams
-    const stadiumsMap: Record<string, string> = {};
-    const teamsMap: Record<string, string> = {};
-
-    for (const item of fixtures) {
-      const apiStadium = item.fixture.venue;
-      if (apiStadium && apiStadium.name) {
-        const { data: stdData } = await supabase
-          .from("stadiums")
-          .upsert({
-            name: apiStadium.name,
-            city: apiStadium.city || "TBD",
-            capacity: apiStadium.capacity || null,
-            api_id: apiStadium.id || null
-          }, { onConflict: "name" })
-          .select("id, name")
-          .single();
-        if (stdData) {
-          stadiumsMap[stdData.name] = stdData.id;
-        }
-      }
-
-      // Home team mapping
-      const home = item.teams.home;
-      if (home && home.name) {
-        const { data: teamData } = await supabase
-          .from("teams")
-          .upsert({
-            name: home.name,
-            code: home.name.substring(0, 3).toUpperCase(), // fallback
-            flag_code: home.logo || "",
-            api_id: home.id
-          }, { onConflict: "api_id" })
-          .select("id, api_id")
-          .single();
-        if (teamData) {
-          teamsMap[String(teamData.api_id)] = teamData.id;
-        }
-      }
-
-      // Away team mapping
-      const away = item.teams.away;
-      if (away && away.name) {
-        const { data: teamData } = await supabase
-          .from("teams")
-          .upsert({
-            name: away.name,
-            code: away.name.substring(0, 3).toUpperCase(),
-            flag_code: away.logo || "",
-            api_id: away.id
-          }, { onConflict: "api_id" })
-          .select("id, api_id")
-          .single();
-        if (teamData) {
-          teamsMap[String(teamData.api_id)] = teamData.id;
+    for (const f of rawFixtures) {
+      const grp = f.Group || "";
+      const gLetter = grp.startsWith("Group ") ? grp.replace("Group ", "") : null;
+      for (const role of ["Home", "Away"]) {
+        const name: string = f[`${role}Team`] || "";
+        if (name && name !== "To be announced" && !/^\d/.test(name)) {
+          if (!(name in teamsMap) || gLetter) teamsMap[name] = gLetter || teamsMap[name] || null;
         }
       }
     }
 
-    // 3. Process Matches
-    const matchesToUpsert = [];
-    for (const item of fixtures) {
-      const apiMatchId = item.fixture.id;
-      const dbHomeId = teamsMap[String(item.teams.home.id)] || null;
-      const dbAwayId = teamsMap[String(item.teams.away.id)] || null;
-      const stadiumName = item.fixture.venue?.name || "";
-      const dbStadiumId = stadiumsMap[stadiumName] || null;
-
-      const dateStr = item.fixture.date;
-      const statusStr = item.fixture.status.short === "FT" ? "finished" : 
-                        ["1H", "2H", "HT", "ET", "P"].includes(item.fixture.status.short) ? "live" : "scheduled";
-
-      matchesToUpsert.push({
-        home_team_id: dbHomeId,
-        away_team_id: dbAwayId,
-        stadium_id: dbStadiumId,
-        date: dateStr,
-        stage: item.league.round.includes("Group") ? "Group Stage" : "Round of 32", // fallback matching round
-        status: statusStr,
-        home_score: item.goals.home,
-        away_score: item.goals.away,
-        api_id: apiMatchId
-      });
+    for (const [name, grpLetter] of Object.entries(teamsMap)) {
+      const code = name.substring(0, 3).toUpperCase();
+      const flag = (ISO2_MAP[name] || name.substring(0, 2).toUpperCase()).substring(0, 10);
+      const { data } = await supabase
+        .from("teams")
+        .upsert(
+          { name, code, flag_code: flag, group_name: grpLetter || undefined },
+          { onConflict: "name" }
+        )
+        .select("id, name").single();
+      if (data) teamDbIds[name] = data.id;
     }
 
-    const { error: matchesError } = await supabase
+    // 4. Upsert matches
+    const matchesToUpsert = rawFixtures.map((f: any) => {
+      const homeName: string = f.HomeTeam || "";
+      const awayName: string = f.AwayTeam || "";
+      const grp: string = f.Group || "";
+      const gLetter = grp.startsWith("Group ") ? grp.replace("Group ", "") : null;
+      const roundNum: number = f.RoundNumber || 1;
+      const hs = f.HomeTeamScore;
+      const aws = f.AwayTeamScore;
+
+      return {
+        home_team_id: teamDbIds[homeName] || null,
+        away_team_id: teamDbIds[awayName] || null,
+        stadium_id: stadiumDbIds[f.Location || ""] || null,
+        date: f.DateUtc?.replace("Z", "+00") || null,
+        group_name: gLetter,
+        stage: ROUND_MAP[roundNum] || "Group Stage",
+        status: (hs !== null && hs !== undefined && aws !== null && aws !== undefined) ? "finished" : "scheduled",
+        home_score: hs ?? null,
+        away_score: aws ?? null,
+        api_id: f.MatchNumber,
+      };
+    });
+
+    const { error: matchErr } = await supabase
       .from("matches")
       .upsert(matchesToUpsert, { onConflict: "api_id" });
 
-    if (matchesError) throw matchesError;
-
+    if (matchErr) throw matchErr;
     recordsUpdated = matchesToUpsert.length;
+
+    console.log(`✅ Upserted ${recordsUpdated} matches`);
 
   } catch (err: any) {
     status = "error";
     errorMessage = err.message || String(err);
-    console.error("Error in sync-fixtures:", errorMessage);
+    console.error("sync-fixtures error:", errorMessage);
   } finally {
-    // Log execution
     const executionTime = Date.now() - startTime;
     await supabase.from("sync_logs").insert({
       function_name: "sync-fixtures",
@@ -169,15 +182,12 @@ serve(async (req) => {
       records_updated: recordsUpdated,
       api_calls_count: apiCalls,
       execution_time_ms: executionTime,
-      error_message: errorMessage || null
+      error_message: errorMessage || null,
     });
   }
 
   return new Response(
-    JSON.stringify({ status, recordsUpdated, executionTimeMs: Date.now() - startTime, error: errorMessage || null }),
-    {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: status === "success" ? 200 : 500,
-    }
+    JSON.stringify({ status, recordsUpdated, dataSource, executionTimeMs: Date.now() - startTime, error: errorMessage || null }),
+    { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: status === "success" ? 200 : 500 }
   );
 });
