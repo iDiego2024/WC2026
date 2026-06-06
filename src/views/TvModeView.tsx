@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tv, Trophy, Activity, Users, Clock, X, ChevronRight, TrendingUp } from 'lucide-react';
-import { useMatches, useRankings, useTeams } from '../hooks/useData';
+import { useMatches, useRankings, useTeams, useNewsArticles } from '../hooks/useData';
+import { runMonteCarlo } from '../utils/simulatorEngine';
 
 export function TvModeView() {
   const navigate = useNavigate();
@@ -10,6 +11,7 @@ export function TvModeView() {
   const { matches, loading: matchesLoading } = useMatches();
   const { rankings, loading: rankingsLoading } = useRankings();
   const { teams, loading: teamsLoading } = useTeams();
+  const { news } = useNewsArticles();
 
   // Ticker animation and clock update
   useEffect(() => {
@@ -63,6 +65,68 @@ export function TvModeView() {
     })
     .sort((a, b) => b.Pts - a.Pts || b.GD - a.GD || a.name.localeCompare(b.name))
     .slice(0, 4);
+
+  // Run Monte Carlo simulation dynamically using ELO ratings
+  const teamSims = teams.map(t => {
+    const baseElo = t.elo_rating || 1500;
+    const strength = Math.max(10, Math.min(100, (baseElo - 1000) / 10));
+    return {
+      id: t.id,
+      code: t.code,
+      name: t.name,
+      flag_code: t.flag_code,
+      group_name: t.group_name || 'A',
+      fifa_rank: t.fifa_rank || 50,
+      strength
+    };
+  });
+
+  const matchSims = matches.map(m => ({
+    id: m.id,
+    home_team_id: m.home_team_id,
+    away_team_id: m.away_team_id,
+    group_name: m.group_name,
+    stage: m.stage,
+    status: m.status,
+    home_score: m.home_score,
+    away_score: m.away_score
+  }));
+
+  // Fast 1000 runs simulation for TV presentation
+  const simulationResults = runMonteCarlo(teamSims, matchSims, {}, 1000);
+  const topContenders = simulationResults.slice(0, 6);
+
+  // Automatically generate ticker items from news articles and AI forecasts
+  const tickerNews: string[] = [];
+  if (news && news.length > 0) {
+    news.slice(0, 5).forEach(article => {
+      tickerNews.push(`${article.title.toUpperCase()}: ${article.summary}`);
+    });
+  }
+
+  if (topContenders[0]) {
+    tickerNews.push(`AI SIMULATOR: ${topContenders[0].name} leads championship win probability with ${topContenders[0].wins}% chance.`);
+  }
+  if (topContenders[1]) {
+    tickerNews.push(`CONTENDER: ${topContenders[1].name} ranks #2 with ${topContenders[1].wins}% win probability.`);
+  }
+  if (rankings[0]) {
+    tickerNews.push(`GLOBAL PREDICTOR LEADER: ${rankings[0].display_name} holds #1 rank with ${rankings[0].score} pts!`);
+  }
+  const finishedMatches = matches.filter(m => m.status === 'finished');
+  if (finishedMatches.length > 0) {
+    const m = finishedMatches[finishedMatches.length - 1];
+    tickerNews.push(`LATEST RESULT: ${m.home_team?.name} ${m.home_score} - ${m.away_score} ${m.away_team?.name} (FT).`);
+  }
+  const scheduled = matches.filter(m => m.status === 'scheduled');
+  if (scheduled[0]) {
+    tickerNews.push(`UPCOMING FIXTURE: ${scheduled[0].home_team?.name} vs ${scheduled[0].away_team?.name} in ${scheduled[0].stadium?.city || 'TBD'}.`);
+  }
+
+  // Ensure enough items for marquee rotation
+  while (tickerNews.length < 5) {
+    tickerNews.push("TV TICKER: Live forecast statistics and matchday standings updating in real-time.");
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-background text-white overflow-hidden flex flex-col font-sans animate-in fade-in duration-1000">
@@ -159,25 +223,18 @@ export function TvModeView() {
             </div>
             
             <div className="p-5 flex-1 flex flex-col justify-center gap-6">
-              {[
-                { name: 'France', flag: 'fr', prob: 22.4, trend: '+1.2' },
-                { name: 'Brazil', flag: 'br', prob: 18.5, trend: '-0.4' },
-                { name: 'England', flag: 'gb-eng', prob: 14.1, trend: '+2.1' },
-                { name: 'Argentina', flag: 'ar', prob: 11.2, trend: '-1.5' },
-                { name: 'Spain', flag: 'es', prob: 9.8, trend: '+0.5' },
-                { name: 'Germany', flag: 'de', prob: 7.5, trend: '-0.2' },
-              ].map((team, idx) => (
+              {topContenders.map((team, idx) => (
                 <div key={idx} className="flex items-center gap-4">
                   <div className="w-8 flex justify-center text-xl font-black text-slate-600">{idx + 1}</div>
-                  <img src={`https://flagcdn.com/w40/${team.flag}.png`} className="w-10 h-6.5 rounded shadow" alt={team.name} />
+                  <img src={`https://flagcdn.com/w40/${team.flag_code.toLowerCase()}.png`} className="w-10 h-6.5 rounded shadow border border-white/5" alt={team.name} />
                   <div className="flex-1 flex flex-col">
                      <span className="text-lg font-bold uppercase text-white leading-none mb-2">{team.name}</span>
                      <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                       <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${team.prob * 3}%` }}></div>
+                       <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${team.wins * 3.5}%` }}></div>
                      </div>
                   </div>
                   <div className="w-24 text-right">
-                    <div className="text-2xl font-mono font-black text-emerald-400">{team.prob.toFixed(1)}%</div>
+                    <div className="text-2xl font-mono font-black text-emerald-400">{team.wins}%</div>
                   </div>
                 </div>
               ))}
@@ -270,23 +327,22 @@ export function TvModeView() {
          {/* Marquee Animation */}
          <div className="flex-1 overflow-hidden relative h-full">
             <div className="absolute whitespace-nowrap h-full flex items-center animate-ticker will-change-transform z-10 gap-16 px-16 font-mono font-bold text-lg">
-               <span><TrendingUp className="inline-block w-5 h-5 mr-2 -mt-1 opacity-50"/> Mbappe scores hat-trick in opening match</span>
-               <span>•</span>
-               <span>Brazil coach confirms Neymar fit for next game</span>
-               <span>•</span>
-               <span><Activity className="inline-block w-5 h-5 mr-2 -mt-1 opacity-50"/> AI Simulator increases France title probability to 22.4%</span>
-               <span>•</span>
-               <span>Record attendance at Estadio Azteca</span>
-               <span>•</span>
-               <span>Messi hints this might be his final tournament</span>
-               <span>•</span>
-               <span><Trophy className="inline-block w-5 h-5 mr-2 -mt-1 opacity-50"/> Fan 'Alex_Pro' takes the lead in Global Predictor Challenge</span>
+               {tickerNews.map((news, i) => (
+                 <span key={i} className="flex items-center gap-2">
+                   <TrendingUp className="inline-block w-5 h-5 mr-2 -mt-1 opacity-50"/>
+                   {news}
+                   <span className="ml-16">•</span>
+                 </span>
+               ))}
                
                {/* Duplicate for seamless infinite scroll */}
-               <span>•</span>
-               <span><TrendingUp className="inline-block w-5 h-5 mr-2 -mt-1 opacity-50"/> Mbappe scores hat-trick in opening match</span>
-               <span>•</span>
-               <span>Brazil coach confirms Neymar fit for next game</span>
+               {tickerNews.map((news, i) => (
+                 <span key={`dup-${i}`} className="flex items-center gap-2">
+                   <TrendingUp className="inline-block w-5 h-5 mr-2 -mt-1 opacity-50"/>
+                   {news}
+                   <span className="ml-16">•</span>
+                 </span>
+               ))}
             </div>
          </div>
       </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,71 @@ import { Heart, MessageCircle, Share2, Trophy, Users, Star, ArrowUpRight, Flame,
 import { useAuth, useLeagues, useRankings } from '../hooks/useData';
 import { useLanguage } from '../context/LanguageContext';
 
+type SocialComment = {
+  id: string;
+  userName: string;
+  avatar: string;
+  content: string;
+  timeText: string;
+};
+
+type SocialPost = {
+  id: string;
+  userName: string;
+  userHandle: string;
+  avatar: string;
+  content: string;
+  isPro?: boolean;
+  timeText: string;
+  likes: number;
+  hasLiked?: boolean;
+  comments: SocialComment[];
+  simulation?: {
+    homeCode: string;
+    homeFlag: string;
+    awayCode: string;
+    awayFlag: string;
+    detail: string;
+    prob: string;
+  };
+};
+
+const DEFAULT_POSTS: SocialPost[] = [
+  {
+    id: 'post-1',
+    userName: 'Marcus_Sim',
+    userHandle: '@marcus99',
+    avatar: 'M',
+    isPro: true,
+    timeText: '2 hrs ago',
+    content: 'Just ran a 100k iteration Monte Carlo on Group F. The model is highly confident in an upset.',
+    likes: 24,
+    hasLiked: false,
+    comments: [
+      { id: 'c-1', userName: 'Sarah_Goal', avatar: 'S', content: 'Morocco has a strong squad this year, not a surprise!', timeText: '1 hr ago' }
+    ],
+    simulation: {
+      homeCode: 'MAR',
+      homeFlag: 'ma',
+      awayCode: 'BEL',
+      awayFlag: 'be',
+      detail: 'Morocco to win Group F',
+      prob: '68.4% Prob'
+    }
+  },
+  {
+    id: 'post-2',
+    userName: 'Diego Tracker',
+    userHandle: '@diegotr',
+    avatar: 'D',
+    timeText: '5 hrs ago',
+    content: 'Argentina looking extremely solid. The predictive model ranks their attack force at 94.',
+    likes: 42,
+    hasLiked: true,
+    comments: []
+  }
+];
+
 export function CommunityView() {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('feed');
@@ -15,12 +80,99 @@ export function CommunityView() {
   const { leagues, createLeague, joinLeague, loading: leaguesLoading } = useLeagues(user?.id);
   const { rankings, loading: rankingsLoading } = useRankings();
 
+  // Social feed states
+  const [posts, setPosts] = useState<SocialPost[]>([]);
+  const [postText, setPostText] = useState('');
+  const [activeCommentsPostId, setActiveCommentsPostId] = useState<string | null>(null);
+  const [commentText, setCommentText] = useState('');
+
   // Dialog / Input states
   const [showJoin, setShowJoin] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
   const [newLeagueName, setNewLeagueName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Load posts on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('wc_community_posts');
+    if (saved) {
+      try {
+        setPosts(JSON.parse(saved));
+      } catch (e) {
+        setPosts(DEFAULT_POSTS);
+      }
+    } else {
+      setPosts(DEFAULT_POSTS);
+      localStorage.setItem('wc_community_posts', JSON.stringify(DEFAULT_POSTS));
+    }
+  }, []);
+
+  const savePostsToStorage = (newPosts: SocialPost[]) => {
+    setPosts(newPosts);
+    localStorage.setItem('wc_community_posts', JSON.stringify(newPosts));
+  };
+
+  const handleCreatePost = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!postText.trim()) return;
+
+    const newPost: SocialPost = {
+      id: `post-${Date.now()}`,
+      userName: user?.display_name || 'Anonymous User',
+      userHandle: `@${(user?.display_name || 'user').toLowerCase().replace(/\s+/g, '')}`,
+      avatar: user?.photo_url || (user?.display_name?.charAt(0) || 'U'),
+      timeText: 'Just now',
+      content: postText,
+      likes: 0,
+      hasLiked: false,
+      comments: []
+    };
+
+    savePostsToStorage([newPost, ...posts]);
+    setPostText('');
+  };
+
+  const handleLikePost = (postId: string) => {
+    const updated = posts.map(p => {
+      if (p.id === postId) {
+        const hasLiked = !p.hasLiked;
+        return {
+          ...p,
+          hasLiked,
+          likes: hasLiked ? p.likes + 1 : p.likes - 1
+        };
+      }
+      return p;
+    });
+    savePostsToStorage(updated);
+  };
+
+  const handleAddComment = (e: React.FormEvent, postId: string) => {
+    e.preventDefault();
+    if (!commentText.trim()) return;
+
+    const newComment: SocialComment = {
+      id: `c-${Date.now()}`,
+      userName: user?.display_name || 'Anonymous User',
+      avatar: user?.photo_url || (user?.display_name?.charAt(0) || 'U'),
+      content: commentText,
+      timeText: 'Just now'
+    };
+
+    const updated = posts.map(p => {
+      if (p.id === postId) {
+        return {
+          ...p,
+          comments: [...p.comments, newComment]
+        };
+      }
+      return p;
+    });
+
+    savePostsToStorage(updated);
+    setCommentText('');
+  };
 
   const handleJoinLeague = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -213,51 +365,120 @@ export function CommunityView() {
               
               {/* Write Post */}
               {user && (
-                <div className="flex gap-3 pb-4 border-b border-border/50">
+                <form onSubmit={handleCreatePost} className="flex gap-3 pb-4 border-b border-border/50">
                   <Avatar className="w-10 h-10 border border-border">
                     {user.photo_url && <AvatarImage src={user.photo_url} />}
                     <AvatarFallback>{user.display_name?.charAt(0) || 'U'}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 space-y-2">
-                    <input type="text" placeholder="Share a prediction, simulation, or thought..." className="w-full bg-secondary/50 border border-white/5 rounded-lg px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-primary/50 transition-colors" />
+                    <input 
+                      type="text" 
+                      value={postText}
+                      onChange={(e) => setPostText(e.target.value)}
+                      placeholder="Share a prediction, simulation, or thought..." 
+                      className="w-full bg-secondary/50 border border-white/5 rounded-lg px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-primary/50 transition-colors" 
+                    />
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="h-6 px-3 text-[9px] uppercase tracking-wider font-bold bg-secondary border-border hover:bg-white/5"><BrainCircuit className="w-3 h-3 mr-1.5"/> Share Sim</Button>
-                      <Button variant="outline" size="sm" className="h-6 px-3 text-[9px] uppercase tracking-wider font-bold bg-secondary border-border hover:bg-white/5"><Crosshair className="w-3 h-3 mr-1.5"/> Share Prediction</Button>
+                      <Button type="submit" size="sm" className="h-6 px-3 text-[9px] uppercase tracking-wider font-bold bg-primary hover:bg-primary/90">Post</Button>
+                      <Button type="button" variant="outline" size="sm" className="h-6 px-3 text-[9px] uppercase tracking-wider font-bold bg-secondary border-border hover:bg-white/5"><BrainCircuit className="w-3 h-3 mr-1.5"/> Share Sim</Button>
+                      <Button type="button" variant="outline" size="sm" className="h-6 px-3 text-[9px] uppercase tracking-wider font-bold bg-secondary border-border hover:bg-white/5"><Crosshair className="w-3 h-3 mr-1.5"/> Share Prediction</Button>
                     </div>
                   </div>
-                </div>
+                </form>
               )}
 
-              {/* Post 1: Simulation Share */}
-              <div className="p-4 rounded-xl border border-border bg-secondary/20 space-y-3">
-                <div className="flex justify-between items-start">
-                  <div className="flex gap-3">
-                    <Avatar className="w-8 h-8 border border-border">
-                      <AvatarFallback className="bg-blue-900 text-blue-200 text-xs font-bold">M</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="text-xs font-bold text-white flex items-center gap-1">Marcus_Sim <span className="text-[9px] px-1 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold ml-1">PRO</span></div>
-                      <div className="text-[9px] text-slate-500">2 hrs ago</div>
+              {posts.map((post) => (
+                <div key={post.id} className="p-4 rounded-xl border border-border bg-secondary/20 space-y-3">
+                  <div className="flex justify-between items-start">
+                    <div className="flex gap-3">
+                      <Avatar className="w-8 h-8 border border-border">
+                        {post.avatar.startsWith('http') ? <AvatarImage src={post.avatar} /> : null}
+                        <AvatarFallback className="bg-blue-900 text-blue-200 text-xs font-bold">{post.avatar.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="text-xs font-bold text-white flex items-center gap-1">
+                          {post.userName} 
+                          {post.isPro && <span className="text-[9px] px-1 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold ml-1">PRO</span>}
+                        </div>
+                        <div className="text-[9px] text-slate-500">{post.timeText}</div>
+                      </div>
                     </div>
+                    <Button variant="ghost" size="icon" className="h-6 w-6"><Share2 className="w-3 h-3 text-slate-400"/></Button>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-6 w-6"><Share2 className="w-3 h-3 text-slate-400"/></Button>
-                </div>
-                <p className="text-xs text-slate-300">Just ran a 100k iteration Monte Carlo on Group F. The model is highly confident in an upset.</p>
-                <div className="p-3 rounded-lg border border-white/5 bg-black/40">
-                  <div className="flex items-center gap-2 mb-2">
-                     <BrainCircuit className="w-4 h-4 text-emerald-400" />
-                     <span className="text-[10px] font-black uppercase text-emerald-400 tracking-widest">Shared Simulation</span>
+                  
+                  <p className="text-xs text-slate-300">{post.content}</p>
+                  
+                  {post.simulation && (
+                    <div className="p-3 rounded-lg border border-white/5 bg-black/40">
+                      <div className="flex items-center gap-2 mb-2">
+                         <BrainCircuit className="w-4 h-4 text-emerald-400" />
+                         <span className="text-[10px] font-black uppercase text-emerald-400 tracking-widest">Shared Simulation</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                         <div className="flex items-center gap-2">
+                           <img src={`https://flagcdn.com/w20/${post.simulation.homeFlag}.png`} className="w-4 h-3 rounded-[2px]" alt=""/>
+                           <span className="font-bold text-white">{post.simulation.detail}</span>
+                         </div>
+                         <span className="font-mono text-emerald-400 font-bold">{post.simulation.prob}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex gap-4 pt-2 text-slate-400">
+                    <button 
+                      onClick={() => handleLikePost(post.id)} 
+                      className={`flex items-center gap-1.5 text-[10px] font-bold transition-colors ${post.hasLiked ? 'text-primary' : 'hover:text-primary'}`}
+                    >
+                      <Heart className={`w-3.5 h-3.5 ${post.hasLiked ? 'fill-primary text-primary' : ''}`} /> {post.likes}
+                    </button>
+                    <button 
+                      onClick={() => setActiveCommentsPostId(activeCommentsPostId === post.id ? null : post.id)} 
+                      className="flex items-center gap-1.5 text-[10px] font-bold hover:text-primary transition-colors"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" /> {post.comments.length}
+                    </button>
                   </div>
-                  <div className="flex items-center justify-between text-xs">
-                     <div className="flex items-center gap-2"><img src="https://flagcdn.com/w20/ma.png" className="w-4 h-3 rounded-[2px]" alt="MAR"/><span className="font-bold text-white">Morocco to win Group F</span></div>
-                     <span className="font-mono text-emerald-400 font-bold">68.4% Prob</span>
-                  </div>
+
+                  {/* Comments Section */}
+                  {activeCommentsPostId === post.id && (
+                    <div className="mt-3 pt-3 border-t border-border/50 space-y-3">
+                      <div className="space-y-2">
+                        {post.comments.map((comment) => (
+                          <div key={comment.id} className="flex gap-2 text-xs bg-secondary/10 p-2 rounded border border-white/5">
+                            <Avatar className="w-6 h-6 border border-border shrink-0">
+                              {comment.avatar.startsWith('http') ? <AvatarImage src={comment.avatar} /> : null}
+                              <AvatarFallback className="text-[8px] bg-slate-800 text-white font-bold">{comment.userName.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-center mb-0.5">
+                                <span className="font-bold text-white text-[10px]">{comment.userName}</span>
+                                <span className="text-[8px] text-slate-500 font-mono">{comment.timeText}</span>
+                              </div>
+                              <p className="text-[10px] text-slate-300 leading-relaxed">{comment.content}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {user ? (
+                        <form onSubmit={(e) => handleAddComment(e, post.id)} className="flex gap-2">
+                          <Input 
+                            type="text" 
+                            value={commentText}
+                            onChange={(e) => setCommentText(e.target.value)}
+                            placeholder="Write a reply..." 
+                            className="h-8 text-xs bg-secondary/50 border-border/50 flex-1"
+                          />
+                          <Button type="submit" size="sm" className="h-8 text-[9px] uppercase font-bold">Reply</Button>
+                        </form>
+                      ) : (
+                        <div className="text-[9px] font-bold text-slate-500 uppercase text-center py-1 bg-secondary/20 rounded">Login to comment</div>
+                      )}
+                    </div>
+                  )}
+
                 </div>
-                <div className="flex gap-4 pt-2 text-slate-400">
-                  <button className="flex items-center gap-1.5 text-[10px] font-bold hover:text-primary transition-colors"><Heart className="w-3.5 h-3.5" /> 24</button>
-                  <button className="flex items-center gap-1.5 text-[10px] font-bold hover:text-primary transition-colors"><MessageCircle className="w-3.5 h-3.5" /> 5</button>
-                </div>
-              </div>
+              ))}
             </div>
           </Tabs>
         </div>

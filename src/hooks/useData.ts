@@ -7,6 +7,7 @@ import {
   leaguesService, 
   profilesService 
 } from '../services/api';
+import { premiumServices } from '../services/premiumServices';
 
 export function useTeams() {
   const [teams, setTeams] = useState<any[]>([]);
@@ -298,4 +299,146 @@ export function useRankings() {
   }, []);
 
   return { rankings, loading, error };
+}
+
+export function useMatchEvents(matchId: string) {
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (!matchId) return;
+    premiumServices.getMatchEvents(matchId)
+      .then(data => {
+        setEvents(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err);
+        setLoading(false);
+      });
+  }, [matchId]);
+
+  return { events, loading, error };
+}
+
+export function useMatchLineups(matchId: string) {
+  const [lineups, setLineups] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (!matchId) return;
+    premiumServices.getMatchLineups(matchId)
+      .then(data => {
+        setLineups(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err);
+        setLoading(false);
+      });
+  }, [matchId]);
+
+  return { lineups, loading, error };
+}
+
+export function useMatchStatistics(matchId: string) {
+  const [statistics, setStatistics] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (!matchId) return;
+    premiumServices.getMatchStatistics(matchId)
+      .then(data => {
+        setStatistics(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err);
+        setLoading(false);
+      });
+  }, [matchId]);
+
+  return { statistics, loading, error };
+}
+
+export function useH2HHistory(homeCode: string, awayCode: string) {
+  const [h2h, setH2h] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!homeCode || !awayCode) return;
+    premiumServices.getH2HHistory(homeCode, awayCode)
+      .then(data => {
+        setH2h(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setLoading(false);
+      });
+  }, [homeCode, awayCode]);
+
+  return { h2h, loading };
+}
+
+export function usePlayerStats() {
+  const [players, setPlayers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    premiumServices.getPlayerStats()
+      .then(data => {
+        setPlayers(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err);
+        setLoading(false);
+      });
+  }, []);
+
+  return { players, loading, error };
+}
+
+export function useNewsArticles() {
+  const [news, setNews] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    premiumServices.getNewsArticles()
+      .then(data => {
+        setNews(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err);
+        setLoading(false);
+      });
+  }, []);
+
+  return { news, loading, error };
+}
+
+export function useTournamentInsights() {
+  const [insights, setInsights] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    premiumServices.getTournamentInsights()
+      .then(data => {
+        setInsights(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err);
+        setLoading(false);
+      });
+  }, []);
+
+  return { insights, loading, error };
 }

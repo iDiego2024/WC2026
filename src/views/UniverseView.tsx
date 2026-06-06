@@ -1,51 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Network, Search, Filter, Maximize2, ZoomIn, ZoomOut, Database, History, User, Flag, Trophy, MapPin, Award, BookOpen, ChevronRight, X } from 'lucide-react';
+import { Network, Search, Filter, Maximize2, ZoomIn, ZoomOut, Database, History, User, Flag, Trophy, MapPin, Award, BookOpen, ChevronRight, X, Loader2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-
-// Mock Data for the Knowledge Graph
-const MOCK_NODES = [
-  { id: 'n1', label: 'Lionel Messi', type: 'player', img: 'https://flagcdn.com/w40/ar.png' },
-  { id: 'n2', label: 'Argentina', type: 'team', img: 'https://flagcdn.com/w40/ar.png' },
-  { id: 'n3', label: 'Qatar 2022', type: 'tournament', img: 'https://flagcdn.com/w40/qa.png' },
-  { id: 'n4', label: 'Diego Maradona', type: 'player', img: 'https://flagcdn.com/w40/ar.png' },
-  { id: 'n5', label: 'Mexico 1986', type: 'tournament', img: 'https://flagcdn.com/w40/mx.png' },
-  { id: 'n6', label: 'Brazil', type: 'team', img: 'https://flagcdn.com/w40/br.png' },
-  { id: 'n7', label: 'Pelé', type: 'player', img: 'https://flagcdn.com/w40/br.png' },
-  { id: 'n8', label: 'Most Goals (Player)', type: 'record', img: '' },
-  { id: 'n9', label: 'Miroslav Klose', type: 'player', img: 'https://flagcdn.com/w40/de.png' },
-  { id: 'n10', label: 'Germany', type: 'team', img: 'https://flagcdn.com/w40/de.png' },
-  { id: 'n11', label: 'Brazil 2014', type: 'tournament', img: 'https://flagcdn.com/w40/br.png' },
-  { id: 'n12', label: 'Maracanazo', type: 'event', img: '' },
-  { id: 'n13', label: 'Uruguay', type: 'team', img: 'https://flagcdn.com/w40/uy.png' },
-  { id: 'n14', label: 'Brazil 1950', type: 'tournament', img: 'https://flagcdn.com/w40/br.png' },
-  { id: 'n15', label: 'Estadio Azteca', type: 'stadium', img: '' },
-  { id: 'n16', label: 'Lionel Scaloni', type: 'coach', img: '' }
-];
-
-const MOCK_EDGES = [
-  { source: 'n1', target: 'n2', label: 'Plays For' },
-  { source: 'n1', target: 'n3', label: 'Won' },
-  { source: 'n2', target: 'n3', label: 'Won' },
-  { source: 'n4', target: 'n2', label: 'Played For' },
-  { source: 'n4', target: 'n5', label: 'Won' },
-  { source: 'n2', target: 'n5', label: 'Won' },
-  { source: 'n7', target: 'n6', label: 'Played For' },
-  { source: 'n6', target: 'n14', label: 'Lost Final' },
-  { source: 'n13', target: 'n14', label: 'Won' },
-  { source: 'n12', target: 'n14', label: 'Occurred In' },
-  { source: 'n12', target: 'n6', label: 'Trauma' },
-  { source: 'n12', target: 'n13', label: 'Glory' },
-  { source: 'n9', target: 'n10', label: 'Played For' },
-  { source: 'n9', target: 'n11', label: 'Won' },
-  { source: 'n10', target: 'n11', label: 'Won' },
-  { source: 'n9', target: 'n8', label: 'Holds (16 Goals)' },
-  { source: 'n4', target: 'n15', label: 'Hand of God' },
-  { source: 'n5', target: 'n15', label: 'Final Venue' },
-  { source: 'n16', target: 'n2', label: 'Manages' },
-  { source: 'n16', target: 'n3', label: 'Won As Coach' }
-];
+import { useTeams, useMatches } from '../hooks/useData';
 
 const TYPE_COLORS: Record<string, string> = {
   player: 'text-blue-400 bg-blue-500/20 border-blue-500/50',
@@ -68,38 +26,220 @@ const TYPE_ICONS: Record<string, any> = {
 };
 
 export function UniverseView() {
-  const [activeNode, setActiveNode] = useState<string | null>('n1');
-  const [zoom, setZoom] = useState(1);
+  const { teams, loading: teamsLoading } = useTeams();
+  const { matches, loading: matchesLoading } = useMatches();
+
+  const [activeNode, setActiveNode] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(0.85);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Simple static simulation for visual presentation purposes
-  const getPositions = () => {
-    return MOCK_NODES.map((node, i) => {
-      // Create a nice spread
-      const angle = (i / MOCK_NODES.length) * 2 * Math.PI;
-      const radius = 200 + (i % 3) * 60; // Concentric rings
-      
-      // Force specific nodes to specific centers
-      let x = Math.cos(angle) * radius;
-      let y = Math.sin(angle) * radius;
+  // Filters
+  const [search, setSearch] = useState('');
+  const [selectedGroup, setSelectedGroup] = useState<string>('A');
+  const [activeTypeFilter, setActiveTypeFilter] = useState<string | null>(null);
 
-      if (node.id === 'n3') { x = -100; y = -100; }
-      if (node.id === 'n1') { x = -150; y = -150; }
-      if (node.id === 'n2') { x = -200; y = -50; }
-      if (node.id === 'n4') { x = -300; y = -100; }
-      if (node.id === 'n6') { x = 150; y = 150; }
-      if (node.id === 'n7') { x = 250; y = 150; }
-      if (node.id === 'n9') { x = 0; y = 200; }
-      if (node.id === 'n10') { x = -100; y = 250; }
+  const isLoading = teamsLoading || matchesLoading;
+
+  // Set default active node on load
+  useEffect(() => {
+    if (teams && teams.length > 0) {
+      const groupAFirstTeam = teams.find(t => t.group_name === 'A');
+      if (groupAFirstTeam) {
+        setActiveNode(`team-${groupAFirstTeam.code}`);
+      }
+    }
+  }, [teams]);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-400 animate-in fade-in duration-500 min-h-[400px]">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        <p className="text-xs font-bold uppercase tracking-widest animate-pulse">Building Knowledge Graph...</p>
+      </div>
+    );
+  }
+
+  // 1. Gather unique stadiums from matches
+  const stadiums: any[] = Array.from(
+    matches.reduce((map, m) => {
+      if (m.stadium) {
+        map.set(m.stadium.id, m.stadium);
+      }
+      return map;
+    }, new Map<string, any>()).values()
+  );
+
+  // 2. Gather unique groups
+  const groups = Array.from(new Set(teams.map(t => t.group_name).filter(Boolean))).sort();
+
+  // 3. Construct the entire Relational Graph
+  const allNodes: any[] = [];
+  const allEdges: any[] = [];
+
+  // Group Nodes
+  groups.forEach(g => {
+    allNodes.push({
+      id: `group-${g}`,
+      label: `Group ${g}`,
+      type: 'tournament',
+      img: ''
+    });
+  });
+
+  // Team Nodes
+  teams.forEach(team => {
+    allNodes.push({
+      id: `team-${team.code}`,
+      label: team.name,
+      type: 'team',
+      img: `https://flagcdn.com/w40/${team.flag_code.toLowerCase()}.png`
+    });
+
+    if (team.group_name) {
+      allEdges.push({
+        source: `team-${team.code}`,
+        target: `group-${team.group_name}`,
+        label: 'Belongs To'
+      });
+    }
+  });
+
+  // Stadium Nodes
+  stadiums.forEach((stadium: any) => {
+    allNodes.push({
+      id: `stadium-${stadium.id}`,
+      label: stadium.name,
+      type: 'stadium',
+      img: ''
+    });
+  });
+
+  // Match Nodes and their relations
+  matches.forEach(m => {
+    const home = m.home_team;
+    const away = m.away_team;
+    if (!home || !away) return;
+
+    const matchNodeId = `match-${m.id}`;
+    allNodes.push({
+      id: matchNodeId,
+      label: `${home.code} v ${away.code}`,
+      type: 'event',
+      img: ''
+    });
+
+    allEdges.push({
+      source: `team-${home.code}`,
+      target: matchNodeId,
+      label: 'Home Team'
+    });
+
+    allEdges.push({
+      source: `team-${away.code}`,
+      target: matchNodeId,
+      label: 'Away Team'
+    });
+
+    if (m.stadium) {
+      allEdges.push({
+        source: `stadium-${m.stadium.id}`,
+        target: matchNodeId,
+        label: 'Hosts Match'
+      });
+    }
+  });
+
+  // 4. Apply filters to reduce visual clutter
+  let filteredNodes = allNodes;
+  let filteredEdges = allEdges;
+
+  if (search.trim()) {
+    const query = search.toLowerCase();
+    const primaryNodeIds = new Set(
+      allNodes.filter(n => n.label.toLowerCase().includes(query)).map(n => n.id)
+    );
+
+    const neighborNodeIds = new Set<string>();
+    allEdges.forEach(e => {
+      if (primaryNodeIds.has(e.source)) neighborNodeIds.add(e.target);
+      if (primaryNodeIds.has(e.target)) neighborNodeIds.add(e.source);
+    });
+
+    const activeNodeIds = new Set([...primaryNodeIds, ...neighborNodeIds]);
+    filteredNodes = allNodes.filter(n => activeNodeIds.has(n.id));
+    filteredEdges = allEdges.filter(e => activeNodeIds.has(e.source) && activeNodeIds.has(e.target));
+  } else if (selectedGroup) {
+    const groupNodeId = `group-${selectedGroup}`;
+    const groupTeamsCodes = new Set(
+      teams.filter(t => t.group_name === selectedGroup).map(t => t.code)
+    );
+
+    const groupMatchesIds = new Set(
+      matches
+        .filter(m => m.home_team && groupTeamsCodes.has(m.home_team.code))
+        .map(m => m.id)
+    );
+
+    const groupStadiumsIds = new Set(
+      matches
+        .filter(m => m.home_team && groupTeamsCodes.has(m.home_team.code) && m.stadium)
+        .map(m => m.stadium.id)
+    );
+
+    filteredNodes = allNodes.filter(n => {
+      if (n.id === groupNodeId) return true;
+      if (n.type === 'team' && groupTeamsCodes.has(n.id.replace('team-', ''))) return true;
+      if (n.type === 'event' && groupMatchesIds.has(n.id.replace('match-', ''))) return true;
+      if (n.type === 'stadium' && groupStadiumsIds.has(n.id.replace('stadium-', ''))) return true;
+      return false;
+    });
+
+    filteredEdges = allEdges.filter(e => {
+      const srcIn = filteredNodes.some(n => n.id === e.source);
+      const tgtIn = filteredNodes.some(n => n.id === e.target);
+      return srcIn && tgtIn;
+    });
+  }
+
+  if (activeTypeFilter) {
+    filteredNodes = filteredNodes.filter(n => n.type === activeTypeFilter || n.type === 'tournament' || n.type === 'team');
+    filteredEdges = filteredEdges.filter(e => {
+      const srcIn = filteredNodes.some(n => n.id === e.source);
+      const tgtIn = filteredNodes.some(n => n.id === e.target);
+      return srcIn && tgtIn;
+    });
+  }
+
+  // 5. Calculate node layout coordinates in circle arrangement
+  const getPositions = (nodesList: any[]) => {
+    return nodesList.map((node, i) => {
+      if (node.type === 'tournament') {
+        return { ...node, x: 0, y: 0 };
+      }
+      
+      const angle = (i / (nodesList.length - 1 || 1)) * 2 * Math.PI;
+      let radius = 180;
+      if (node.type === 'team') radius = 100;
+      if (node.type === 'stadium') radius = 230;
+      if (node.type === 'event') radius = 170;
+
+      const x = Math.cos(angle) * radius;
+      const y = Math.sin(angle) * radius;
       
       return { ...node, x, y };
     });
   };
 
-  const nodesWithPositions = getPositions();
+  const nodesWithPositions = getPositions(filteredNodes);
+
+  // Inspector details
+  const activeNodeData = filteredNodes.find(n => n.id === activeNode);
+  const teamDetails = activeNodeData?.type === 'team' ? teams.find(t => `team-${t.code}` === activeNode) : null;
+  const matchDetails = activeNodeData?.type === 'event' ? matches.find(m => `match-${m.id}` === activeNode) : null;
+  const stadiumDetails = activeNodeData?.type === 'stadium' ? stadiums.find((s: any) => `stadium-${s.id}` === activeNode) : null;
 
   const handlePointerDown = (e: React.PointerEvent) => {
     setIsDragging(true);
@@ -118,8 +258,6 @@ export function UniverseView() {
     setIsDragging(false);
   };
 
-  const activeNodeData = MOCK_NODES.find(n => n.id === activeNode);
-
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] animate-in fade-in duration-500 pb-4">
       <header className="space-y-0.5 mb-2 border-b border-border/50 pb-4 shrink-0">
@@ -127,7 +265,7 @@ export function UniverseView() {
           <Network className="w-6 h-6 text-primary" />
           Universo Mundialista
         </h1>
-        <p className="text-xs text-slate-400 font-medium tracking-wide uppercase">Knowledge Graph: Explora la historia de los Mundiales</p>
+        <p className="text-xs text-slate-400 font-medium tracking-wide uppercase">Knowledge Graph: Explora la historia y conexiones de la Copa 2026</p>
       </header>
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-0">
@@ -137,11 +275,45 @@ export function UniverseView() {
           <div className="p-4 border-b border-border/50 space-y-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-              <Input placeholder="Buscar jugadores, equipos..." className="pl-9 bg-secondary border-border text-xs" />
+              <Input 
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  if (e.target.value.trim()) {
+                    setSelectedGroup('');
+                  }
+                }}
+                placeholder="Buscar equipos, estadios, partidos..." 
+                className="pl-9 bg-secondary border-border text-xs" 
+              />
             </div>
-            <div className="flex flex-wrap gap-2">
-               {['player', 'team', 'tournament', 'record', 'stadium'].map(type => (
-                 <Badge key={type} variant="outline" className={`text-[9px] uppercase cursor-pointer hover:bg-white/10 ${TYPE_COLORS[type]}`}>
+            
+            <div className="space-y-1">
+              <div className="text-[9px] font-black uppercase text-slate-500 tracking-widest mb-1.5">Filtrar Grupo</div>
+              <div className="flex flex-wrap gap-1 max-h-16 overflow-y-auto no-scrollbar">
+                {groups.map(g => (
+                  <button 
+                    key={g} 
+                    onClick={() => {
+                      setSelectedGroup(g);
+                      setSearch('');
+                    }}
+                    className={`h-5 w-7 text-[9px] font-bold rounded flex items-center justify-center border ${selectedGroup === g ? 'bg-primary/20 border-primary text-primary' : 'bg-secondary border-border text-slate-400'}`}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2 pt-2 border-t border-border/50">
+               {['team', 'stadium', 'event'].map(type => (
+                 <Badge 
+                   key={type} 
+                   variant="outline" 
+                   onClick={() => setActiveTypeFilter(activeTypeFilter === type ? null : type)}
+                   className={`text-[9px] uppercase cursor-pointer hover:bg-white/10 ${activeTypeFilter === type ? 'ring-2 ring-primary ring-offset-1 ring-offset-background' : ''} ${TYPE_COLORS[type]}`}
+                 >
                    {type}
                  </Badge>
                ))}
@@ -149,10 +321,10 @@ export function UniverseView() {
           </div>
           
           <div className="flex-1 overflow-y-auto no-scrollbar p-0">
-            <div className="p-3 text-[10px] font-black uppercase text-slate-500 tracking-widest pl-4">Descubrimientos Populares</div>
+            <div className="p-3 text-[10px] font-black uppercase text-slate-500 tracking-widest pl-4">Entidades Conectadas ({filteredNodes.length})</div>
             <div className="space-y-1 p-2">
-              {MOCK_NODES.slice(0, 8).map(node => {
-                const Icon = TYPE_ICONS[node.type];
+              {filteredNodes.slice(0, 20).map(node => {
+                const Icon = TYPE_ICONS[node.type] || Flag;
                 return (
                   <button 
                     key={node.id}
@@ -169,6 +341,11 @@ export function UniverseView() {
                   </button>
                 )
               })}
+              {filteredNodes.length > 20 && (
+                <div className="text-center text-[9px] font-mono text-slate-600 py-2">
+                  Showing top 20 nodes. Search to refine.
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -178,13 +355,13 @@ export function UniverseView() {
           
           {/* Controls Overlay */}
           <div className="absolute top-4 right-4 z-20 flex flex-col gap-2">
-             <Button variant="outline" size="icon" className="w-8 h-8 rounded-full bg-secondary/80 backdrop-blur-sm border-border hover:bg-white/10" onClick={() => setZoom(z => Math.min(z + 0.2, 3))}>
+             <Button variant="outline" size="icon" className="w-8 h-8 rounded-full bg-secondary/80 backdrop-blur-sm border-border hover:bg-white/10" onClick={() => setZoom(z => Math.min(z + 0.15, 3))}>
                <ZoomIn className="w-4 h-4" />
              </Button>
-             <Button variant="outline" size="icon" className="w-8 h-8 rounded-full bg-secondary/80 backdrop-blur-sm border-border hover:bg-white/10" onClick={() => setZoom(z => Math.max(z - 0.2, 0.5))}>
+             <Button variant="outline" size="icon" className="w-8 h-8 rounded-full bg-secondary/80 backdrop-blur-sm border-border hover:bg-white/10" onClick={() => setZoom(z => Math.max(z - 0.15, 0.4))}>
                <ZoomOut className="w-4 h-4" />
              </Button>
-             <Button variant="outline" size="icon" className="w-8 h-8 rounded-full bg-secondary/80 backdrop-blur-sm border-border hover:bg-white/10" onClick={() => { setZoom(1); setPan({x: 0, y: 0}); }}>
+             <Button variant="outline" size="icon" className="w-8 h-8 rounded-full bg-secondary/80 backdrop-blur-sm border-border hover:bg-white/10" onClick={() => { setZoom(0.85); setPan({x: 0, y: 0}); }}>
                <Maximize2 className="w-4 h-4" />
              </Button>
           </div>
@@ -192,7 +369,7 @@ export function UniverseView() {
           <div className="absolute top-4 left-4 z-20">
              <div className="bg-secondary/80 backdrop-blur-sm border border-border px-3 py-1.5 rounded-full flex items-center gap-2">
                <Database className="w-3.5 h-3.5 text-primary" />
-               <span className="text-[10px] uppercase font-bold tracking-widest text-white">Graph Database Status</span>
+               <span className="text-[10px] uppercase font-bold tracking-widest text-white">Dynamic Graph Loaded</span>
                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse ml-2" />
              </div>
           </div>
@@ -207,22 +384,22 @@ export function UniverseView() {
             onPointerLeave={handlePointerUp}
           >
              <div 
-               className="w-full h-full relative origin-center"
-               style={{ 
-                 transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-                 transition: isDragging ? 'none' : 'transform 0.3s ease-out'
-               }}
+                className="w-full h-full relative origin-center"
+                style={{ 
+                  transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                  transition: isDragging ? 'none' : 'transform 0.3s ease-out'
+                }}
              >
                 {/* Center point logic for relative positioning */}
                 <div className="absolute top-1/2 left-1/2 w-0 h-0">
-                  {/* Edges calculation (Visual logic only) */}
+                  {/* Edges calculation */}
                   <svg className="absolute overflow-visible pointer-events-none" style={{ top: 0, left: 0 }}>
                     <defs>
                       <marker id="arrow" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                         <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" className="text-slate-600" />
                       </marker>
                     </defs>
-                    {MOCK_EDGES.map((edge, i) => {
+                    {filteredEdges.map((edge, i) => {
                         const s = nodesWithPositions.find(n => n.id === edge.source);
                         const t = nodesWithPositions.find(n => n.id === edge.target);
                         if (!s || !t) return null;
@@ -240,7 +417,6 @@ export function UniverseView() {
                               markerEnd="url(#arrow)"
                               className="transition-colors duration-300"
                             />
-                            {/* Edge Label (only show for active node connections to reduce clutter) */}
                             {isActive && (
                                <foreignObject 
                                  x={(s.x + t.x) / 2 - 40} 
@@ -261,12 +437,12 @@ export function UniverseView() {
                   {/* Nodes */}
                   {nodesWithPositions.map((node) => {
                     const isSelected = activeNode === node.id;
-                    const isConnected = MOCK_EDGES.some(e => 
+                    const isConnected = filteredEdges.some(e => 
                       (e.source === activeNode && e.target === node.id) || 
                       (e.target === activeNode && e.source === node.id)
                     );
-                    const opacity = activeNode ? (isSelected || isConnected ? 1 : 0.3) : 1;
-                    const Icon = TYPE_ICONS[node.type];
+                    const opacity = activeNode ? (isSelected || isConnected ? 1 : 0.25) : 1;
+                    const Icon = TYPE_ICONS[node.type] || Flag;
 
                     return (
                       <div
@@ -278,10 +454,7 @@ export function UniverseView() {
                          <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 shadow-xl cursor-pointer transition-transform ${isSelected ? 'scale-125 ring-4 ring-primary/20' : 'group-hover:scale-110'} bg-card ${TYPE_COLORS[node.type]}`}>
                             {node.img ? (
                               <div className="relative w-full h-full rounded-full overflow-hidden flex items-center justify-center p-2 bg-secondary">
-                                {node.type === 'team' || node.type === 'tournament' ? 
-                                   <img src={node.img} className="w-full object-cover" alt="" /> :
-                                   <Icon className="w-5 h-5" />
-                                }
+                                <img src={node.img} className="w-full object-cover" alt="" />
                               </div>
                             ) : (
                                <Icon className="w-5 h-5" />
@@ -317,12 +490,13 @@ export function UniverseView() {
                    </Badge>
                    
                    <div className="w-16 h-16 rounded-xl bg-background border-2 border-border shadow-2xl absolute -bottom-8 flex items-center justify-center text-primary overflow-hidden">
-                     {activeNodeData.img && (activeNodeData.type === 'team' || activeNodeData.type === 'tournament') ? 
-                        <img src={activeNodeData.img} className="w-10 h-auto" alt="" /> :
+                     {activeNodeData.img ? (
+                        <img src={activeNodeData.img} className="w-10 h-auto" alt="" />
+                     ) : (
                         <div className={`w-full h-full flex flex-col items-center justify-center ${TYPE_COLORS[activeNodeData.type]}`}>
-                          {<activeNodeData.type className="w-6 h-6" />}
+                          {React.createElement(TYPE_ICONS[activeNodeData.type] || Flag, { className: "w-6 h-6" })}
                         </div>
-                     }
+                     )}
                    </div>
                 </div>
 
@@ -335,10 +509,10 @@ export function UniverseView() {
                    <div>
                      <h3 className="text-[9px] font-black uppercase text-slate-500 tracking-widest mb-3">Conexiones Directas</h3>
                      <div className="space-y-2">
-                       {MOCK_EDGES.filter(e => e.source === activeNode || e.target === activeNode).map((e, idx) => {
+                       {filteredEdges.filter(e => e.source === activeNode || e.target === activeNode).map((e, idx) => {
                           const isIncoming = e.target === activeNode;
                           const otherNodeId = isIncoming ? e.source : e.target;
-                          const otherNode = MOCK_NODES.find(n => n.id === otherNodeId);
+                          const otherNode = filteredNodes.find(n => n.id === otherNodeId);
                           if (!otherNode) return null;
 
                           return (
@@ -361,9 +535,27 @@ export function UniverseView() {
                         <Database className="w-3 h-3" /> Metadatos
                       </h3>
                       <div className="font-mono text-[9px] text-slate-400 space-y-1">
-                        <div className="flex justify-between"><span>Created:</span> <span className="text-white">2026-06-05</span></div>
-                        <div className="flex justify-between"><span>Degree:</span> <span className="text-white">{MOCK_EDGES.filter(e => e.source === activeNode || e.target === activeNode).length} edges</span></div>
-                        <div className="flex justify-between"><span>Status:</span> <span className="text-emerald-400">Verified</span></div>
+                        {activeNodeData.type === 'team' && teamDetails && (
+                          <>
+                            <div className="flex justify-between"><span>FIFA Rank:</span> <span className="text-white">#{teamDetails.fifa_rank}</span></div>
+                            <div className="flex justify-between"><span>Continent:</span> <span className="text-white">{teamDetails.continent}</span></div>
+                            <div className="flex justify-between"><span>Group:</span> <span className="text-white">Group {teamDetails.group_name}</span></div>
+                          </>
+                        )}
+                        {activeNodeData.type === 'event' && matchDetails && (
+                          <>
+                            <div className="flex justify-between"><span>Stage:</span> <span className="text-white">{matchDetails.stage}</span></div>
+                            <div className="flex justify-between"><span>Status:</span> <span className="text-emerald-400">{matchDetails.status}</span></div>
+                            <div className="flex justify-between"><span>Score:</span> <span className="text-white">{matchDetails.home_score ?? '-'} - {matchDetails.away_score ?? '-'}</span></div>
+                          </>
+                        )}
+                        {activeNodeData.type === 'stadium' && stadiumDetails && (
+                          <>
+                            <div className="flex justify-between"><span>City:</span> <span className="text-white">{stadiumDetails.city}</span></div>
+                            <div className="flex justify-between"><span>Capacity:</span> <span className="text-white">{stadiumDetails.capacity?.toLocaleString() || 'N/A'}</span></div>
+                          </>
+                        )}
+                        <div className="flex justify-between"><span>Degree:</span> <span className="text-white">{filteredEdges.filter(e => e.source === activeNode || e.target === activeNode).length} edges</span></div>
                       </div>
                    </div>
                 </div>
