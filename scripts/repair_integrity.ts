@@ -31,69 +31,69 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 // Fuente: seed original (supabase_seed_full.sql)
 // ============================================================
 const CANONICAL_TEAMS = [
-  // Grupo A (feed: Mexico, Korea Republic, South Africa, Czechia→Serbia)
-  { code: 'MEX', name: 'Mexico',        flag_code: 'mx', group_name: 'A', fifa_rank: 14,  continent: 'CONCACAF' },
+  // Grupo A
+  { code: 'MEX', name: 'Mexico',        flag_code: 'mx', group_name: 'A', fifa_rank: 15,  continent: 'CONCACAF' },
+  { code: 'RSA', name: 'South Africa',  flag_code: 'za', group_name: 'A', fifa_rank: 59,  continent: 'CAF' },
   { code: 'KOR', name: 'South Korea',   flag_code: 'kr', group_name: 'A', fifa_rank: 22,  continent: 'AFC' },
-  { code: 'RSA', name: 'South Africa',  flag_code: 'za', group_name: 'A', fifa_rank: 58,  continent: 'CAF' },
-  { code: 'SRB', name: 'Serbia',        flag_code: 'rs', group_name: 'A', fifa_rank: 33,  continent: 'UEFA' },
-  // Grupo B (feed: Canada, Qatar, Switzerland, Bosnia→Sweden)
-  { code: 'CAN', name: 'Canada',        flag_code: 'ca', group_name: 'B', fifa_rank: 50,  continent: 'CONCACAF' },
-  { code: 'QAT', name: 'Qatar',         flag_code: 'qa', group_name: 'B', fifa_rank: 58,  continent: 'AFC' },
+  { code: 'CZE', name: 'Czechia',        flag_code: 'cz', group_name: 'A', fifa_rank: 36,  continent: 'UEFA' },
+  // Grupo B
+  { code: 'CAN', name: 'Canada',        flag_code: 'ca', group_name: 'B', fifa_rank: 40,  continent: 'CONCACAF' },
+  { code: 'BIH', name: 'Bosnia and Herzegovina', flag_code: 'ba', group_name: 'B', fifa_rank: 74, continent: 'UEFA' },
+  { code: 'QAT', name: 'Qatar',         flag_code: 'qa', group_name: 'B', fifa_rank: 37,  continent: 'AFC' },
   { code: 'SUI', name: 'Switzerland',   flag_code: 'ch', group_name: 'B', fifa_rank: 19,  continent: 'UEFA' },
-  { code: 'SWE', name: 'Sweden',        flag_code: 'se', group_name: 'B', fifa_rank: 26,  continent: 'UEFA' },
-  // Grupo C (feed: Brazil, Morocco, Ghana, Haiti→Japan)
+  // Grupo C
   { code: 'BRA', name: 'Brazil',        flag_code: 'br', group_name: 'C', fifa_rank: 5,   continent: 'CONMEBOL' },
-  { code: 'MAR', name: 'Morocco',       flag_code: 'ma', group_name: 'C', fifa_rank: 13,  continent: 'CAF' },
-  { code: 'GHA', name: 'Ghana',         flag_code: 'gh', group_name: 'C', fifa_rank: 61,  continent: 'CAF' },
-  { code: 'JPN', name: 'Japan',         flag_code: 'jp', group_name: 'C', fifa_rank: 17,  continent: 'AFC' },
-  // Grupo D (feed: Argentina, USA, Australia, Türkiye→Denmark)
-  { code: 'ARG', name: 'Argentina',     flag_code: 'ar', group_name: 'D', fifa_rank: 1,   continent: 'CONMEBOL' },
+  { code: 'MAR', name: 'Morocco',       flag_code: 'ma', group_name: 'C', fifa_rank: 12,  continent: 'CAF' },
+  { code: 'HTI', name: 'Haiti',         flag_code: 'ht', group_name: 'C', fifa_rank: 90,  continent: 'CONCACAF' },
+  { code: 'SCO', name: 'Scotland',      flag_code: 'gb-sct', group_name: 'C', fifa_rank: 39, continent: 'UEFA' },
+  // Grupo D
   { code: 'USA', name: 'United States', flag_code: 'us', group_name: 'D', fifa_rank: 11,  continent: 'CONCACAF' },
-  { code: 'AUS', name: 'Australia',     flag_code: 'au', group_name: 'D', fifa_rank: 23,  continent: 'AFC' },
-  { code: 'DEN', name: 'Denmark',       flag_code: 'dk', group_name: 'D', fifa_rank: 21,  continent: 'UEFA' },
-  // Grupo E (feed: Germany, Côte d'Ivoire, Ecuador, Curaçao→Venezuela)
+  { code: 'PRY', name: 'Paraguay',      flag_code: 'py', group_name: 'D', fifa_rank: 56,  continent: 'CONMEBOL' },
+  { code: 'AUS', name: 'Australia',     flag_code: 'au', group_name: 'D', fifa_rank: 24,  continent: 'AFC' },
+  { code: 'TUR', name: 'Turkey',        flag_code: 'tr', group_name: 'D', fifa_rank: 35,  continent: 'UEFA' },
+  // Grupo E
   { code: 'GER', name: 'Germany',       flag_code: 'de', group_name: 'E', fifa_rank: 16,  continent: 'UEFA' },
-  { code: 'CIV', name: 'Ivory Coast',   flag_code: 'ci', group_name: 'E', fifa_rank: 39,  continent: 'CAF' },
-  { code: 'ECU', name: 'Ecuador',       flag_code: 'ec', group_name: 'E', fifa_rank: 32,  continent: 'CONMEBOL' },
-  { code: 'VEN', name: 'Venezuela',     flag_code: 've', group_name: 'E', fifa_rank: 49,  continent: 'CONMEBOL' },
-  // Grupo F (feed: Japan-already-C, Netherlands, Sweden-already-B, Tunisia)
-  { code: 'NED', name: 'Netherlands',   flag_code: 'nl', group_name: 'F', fifa_rank: 6,   continent: 'UEFA' },
-  { code: 'TUN', name: 'Tunisia',       flag_code: 'tn', group_name: 'F', fifa_rank: 28,  continent: 'CAF' },
-  { code: 'IRN', name: 'Iran',          flag_code: 'ir', group_name: 'F', fifa_rank: 20,  continent: 'AFC' },
-  { code: 'NZL', name: 'New Zealand',   flag_code: 'nz', group_name: 'F', fifa_rank: 104, continent: 'OFC' },
-  // Grupo G (feed: Belgium, Egypt, IR Iran-already-F, New Zealand-already-F)
-  { code: 'BEL', name: 'Belgium',       flag_code: 'be', group_name: 'G', fifa_rank: 4,   continent: 'UEFA' },
+  { code: 'CUW', name: 'Curaçao',       flag_code: 'cw', group_name: 'E', fifa_rank: 91,  continent: 'CONCACAF' },
+  { code: 'CIV', name: 'Ivory Coast',   flag_code: 'ci', group_name: 'E', fifa_rank: 38,  continent: 'CAF' },
+  { code: 'ECU', name: 'Ecuador',       flag_code: 'ec', group_name: 'E', fifa_rank: 31,  continent: 'CONMEBOL' },
+  // Grupo F
+  { code: 'NED', name: 'Netherlands',   flag_code: 'nl', group_name: 'F', fifa_rank: 7,   continent: 'UEFA' },
+  { code: 'JPN', name: 'Japan',         flag_code: 'jp', group_name: 'F', fifa_rank: 18,  continent: 'AFC' },
+  { code: 'SWE', name: 'Sweden',        flag_code: 'se', group_name: 'F', fifa_rank: 28,  continent: 'UEFA' },
+  { code: 'TUN', name: 'Tunisia',       flag_code: 'tn', group_name: 'F', fifa_rank: 41,  continent: 'CAF' },
+  // Grupo G
+  { code: 'BEL', name: 'Belgium',       flag_code: 'be', group_name: 'G', fifa_rank: 3,   continent: 'UEFA' },
   { code: 'EGY', name: 'Egypt',         flag_code: 'eg', group_name: 'G', fifa_rank: 36,  continent: 'CAF' },
-  { code: 'MLI', name: 'Mali',          flag_code: 'ml', group_name: 'G', fifa_rank: 47,  continent: 'CAF' },
-  { code: 'KOR', name: 'South Korea', flag_code: 'kr', group_name: 'G', fifa_rank: 22, continent: 'AFC' }, // dedup
-  // Grupo H (feed: Spain, Uruguay, Poland, Saudi Arabia)
+  { code: 'IRN', name: 'Iran',          flag_code: 'ir', group_name: 'G', fifa_rank: 20,  continent: 'AFC' },
+  { code: 'NZL', name: 'New Zealand',   flag_code: 'nz', group_name: 'G', fifa_rank: 104, continent: 'OFC' },
+  // Grupo H
   { code: 'ESP', name: 'Spain',         flag_code: 'es', group_name: 'H', fifa_rank: 8,   continent: 'UEFA' },
-  { code: 'URU', name: 'Uruguay',       flag_code: 'uy', group_name: 'H', fifa_rank: 11,  continent: 'CONMEBOL' },
-  { code: 'POL', name: 'Poland',        flag_code: 'pl', group_name: 'H', fifa_rank: 31,  continent: 'UEFA' },
+  { code: 'CPV', name: 'Cabo Verde',    flag_code: 'cv', group_name: 'H', fifa_rank: 65,  continent: 'CAF' },
   { code: 'KSA', name: 'Saudi Arabia',  flag_code: 'sa', group_name: 'H', fifa_rank: 53,  continent: 'AFC' },
-  // Grupo I (feed: France, Iraq, Norway→Peru, Senegal)
+  { code: 'URU', name: 'Uruguay',       flag_code: 'uy', group_name: 'H', fifa_rank: 11,  continent: 'CONMEBOL' },
+  // Grupo I
   { code: 'FRA', name: 'France',        flag_code: 'fr', group_name: 'I', fifa_rank: 2,   continent: 'UEFA' },
-  { code: 'IRQ', name: 'Iraq',          flag_code: 'iq', group_name: 'I', fifa_rank: 59,  continent: 'AFC' },
   { code: 'SEN', name: 'Senegal',       flag_code: 'sn', group_name: 'I', fifa_rank: 17,  continent: 'CAF' },
-  { code: 'PER', name: 'Peru',          flag_code: 'pe', group_name: 'I', fifa_rank: 35,  continent: 'CONMEBOL' },
-  // Grupo J (feed: Algeria, Italy, Austria→Cameroon, Jordan→Costa Rica)
+  { code: 'IRQ', name: 'Iraq',          flag_code: 'iq', group_name: 'I', fifa_rank: 58,  continent: 'AFC' },
+  { code: 'NOR', name: 'Norway',        flag_code: 'no', group_name: 'I', fifa_rank: 47,  continent: 'UEFA' },
+  // Grupo J
+  { code: 'ARG', name: 'Argentina',     flag_code: 'ar', group_name: 'J', fifa_rank: 1,   continent: 'CONMEBOL' },
   { code: 'ALG', name: 'Algeria',       flag_code: 'dz', group_name: 'J', fifa_rank: 43,  continent: 'CAF' },
-  { code: 'ITA', name: 'Italy',         flag_code: 'it', group_name: 'J', fifa_rank: 9,   continent: 'UEFA' },
-  { code: 'CMR', name: 'Cameroon',      flag_code: 'cm', group_name: 'J', fifa_rank: 51,  continent: 'CAF' },
-  { code: 'CRC', name: 'Costa Rica',    flag_code: 'cr', group_name: 'J', fifa_rank: 54,  continent: 'CONCACAF' },
-  // Grupo K (feed: Colombia, Portugal, Chile, Uzbekistan→Jamaica)
-  { code: 'COL', name: 'Colombia',      flag_code: 'co', group_name: 'K', fifa_rank: 15,  continent: 'CONMEBOL' },
-  { code: 'POR', name: 'Portugal',      flag_code: 'pt', group_name: 'K', fifa_rank: 7,   continent: 'UEFA' },
-  { code: 'CHI', name: 'Chile',         flag_code: 'cl', group_name: 'K', fifa_rank: 40,  continent: 'CONMEBOL' },
-  { code: 'JAM', name: 'Jamaica',       flag_code: 'jm', group_name: 'K', fifa_rank: 55,  continent: 'CONCACAF' },
-  // Grupo L (feed: Croatia, England, Ghana-already-C, Panama)
+  { code: 'AUT', name: 'Austria',       flag_code: 'at', group_name: 'J', fifa_rank: 25,  continent: 'UEFA' },
+  { code: 'JOR', name: 'Jordan',        flag_code: 'jo', group_name: 'J', fifa_rank: 71,  continent: 'AFC' },
+  // Grupo K
+  { code: 'POR', name: 'Portugal',      flag_code: 'pt', group_name: 'K', fifa_rank: 6,   continent: 'UEFA' },
+  { code: 'COD', name: 'Congo DR',      flag_code: 'cd', group_name: 'K', fifa_rank: 61,  continent: 'CAF' },
+  { code: 'UZB', name: 'Uzbekistan',    flag_code: 'uz', group_name: 'K', fifa_rank: 66,  continent: 'AFC' },
+  { code: 'COL', name: 'Colombia',      flag_code: 'co', group_name: 'K', fifa_rank: 14,  continent: 'CONMEBOL' },
+  // Grupo L
+  { code: 'ENG', name: 'England',       flag_code: 'gb-eng', group_name: 'L', fifa_rank: 4, continent: 'UEFA' },
   { code: 'CRO', name: 'Croatia',       flag_code: 'hr', group_name: 'L', fifa_rank: 10,  continent: 'UEFA' },
-  { code: 'ENG', name: 'England',       flag_code: 'gb-eng', group_name: 'L', fifa_rank: 3, continent: 'UEFA' },
-  { code: 'PAN', name: 'Panama',        flag_code: 'pa', group_name: 'L', fifa_rank: 41,  continent: 'CONCACAF' },
-  { code: 'NGA', name: 'Nigeria',       flag_code: 'ng', group_name: 'L', fifa_rank: 28,  continent: 'CAF' },
+  { code: 'GHA', name: 'Ghana',         flag_code: 'gh', group_name: 'L', fifa_rank: 64,  continent: 'CAF' },
+  { code: 'PAN', name: 'Panama',        flag_code: 'pa', group_name: 'L', fifa_rank: 44,  continent: 'CONCACAF' },
 ];
 
-// De-duplicate by code (in case JPN, GHA appear twice)
+// De-duplicate by code
 const TEAMS_MAP = new Map<string, typeof CANONICAL_TEAMS[0]>();
 for (const t of CANONICAL_TEAMS) {
   TEAMS_MAP.set(t.code, t);
@@ -105,69 +105,67 @@ const UNIQUE_TEAMS = Array.from(TEAMS_MAP.values());
 // ============================================================
 const FEED_NAME_TO_CODE: Record<string, string> = {
   // Grupo A
-  'Mexico':               'MEX',
-  'South Africa':         'RSA',
-  'Korea Republic':       'KOR',
-  'New Zealand':          'NZL',
-  'Czechia':              'SRB',    // Czechia no está en 48, mapear a Serbia (Grupo A en feed)
+  'Mexico':                 'MEX',
+  'South Africa':           'RSA',
+  'Korea Republic':         'KOR',
+  'Czechia':                'CZE',
   // Grupo B
-  'Canada':               'CAN',
-  'Qatar':                'QAT',
-  'Switzerland':          'SUI',
-  'Bosnia and Herzegovina': 'SWE',  // Bosnia no en 48, mapear a Sweden (Grupo B en feed)
+  'Canada':                 'CAN',
+  'Bosnia and Herzegovina': 'BIH',
+  'Qatar':                  'QAT',
+  'Switzerland':            'SUI',
   // Grupo C
-  'Brazil':               'BRA',
-  'Morocco':              'MAR',
-  'Ghana':                'GHA',
-  'Haiti':                'JPN',    // Haiti no en 48, mapear a Japan (Grupo C en feed)
-  'Scotland':             'JPN',    // Scotland no en 48 — ya cubierto por Japan
+  'Brazil':                 'BRA',
+  'Morocco':                'MAR',
+  'Haiti':                  'HTI',
+  'Scotland':               'SCO',
   // Grupo D
-  'Argentina':            'ARG',
-  'USA':                  'USA',
-  'Australia':            'AUS',
-  'Türkiye':              'DEN',    // Türkiye no en 48, mapear a Denmark
-  'Paraguay':             'IRQ',    // Paraguay no en 48, mapear a Iraq slot (D en feed)
+  'USA':                    'USA',
+  'Paraguay':               'PRY',
+  'Australia':              'AUS',
+  'Türkiye':                'TUR',
+  'Turkey':                 'TUR',
   // Grupo E
-  'Germany':              'GER',
-  "Côte d'Ivoire":        'CIV',
-  'Ecuador':              'ECU',
-  'Curaçao':              'VEN',    // Curaçao no en 48, mapear a Venezuela
+  'Germany':                'GER',
+  'Curaçao':                'CUW',
+  "Côte d'Ivoire":          'CIV',
+  'Ecuador':                'ECU',
   // Grupo F
-  'Japan':                'JPN',
-  'Netherlands':          'NED',
-  'Sweden':               'SWE',
-  'Tunisia':              'TUN',
+  'Netherlands':            'NED',
+  'Japan':                  'JPN',
+  'Sweden':                 'SWE',
+  'Tunisia':                'TUN',
   // Grupo G
-  'Belgium':              'BEL',
-  'Egypt':                'EGY',
-  'IR Iran':              'IRN',
+  'Belgium':                'BEL',
+  'Egypt':                  'EGY',
+  'IR Iran':                'IRN',
+  'Iran':                   'IRN',
+  'New Zealand':            'NZL',
   // Grupo H
-  'Spain':                'ESP',
-  'Uruguay':              'URU',
-  'Poland':               'POL',
-  'Saudi Arabia':         'KSA',
-  'Cabo Verde':           'MLI',    // Cabo Verde no en 48, mapear a Mali slot
+  'Spain':                  'ESP',
+  'Cabo Verde':             'CPV',
+  'Saudi Arabia':           'KSA',
+  'Uruguay':                'URU',
   // Grupo I
-  'France':               'FRA',
-  'Iraq':                 'IRQ',
-  'Senegal':              'SEN',
-  'Norway':               'PER',    // Norway no en 48, mapear a Peru
+  'France':                 'FRA',
+  'Senegal':                'SEN',
+  'Iraq':                   'IRQ',
+  'Norway':                 'NOR',
   // Grupo J
-  'Algeria':              'ALG',
-  'Italy':                'ITA',
-  'Austria':              'CMR',    // Austria no en 48, mapear a Cameroon
-  'Jordan':               'CRC',    // Jordan no en 48, mapear a Costa Rica
+  'Argentina':              'ARG',
+  'Algeria':                'ALG',
+  'Austria':                'AUT',
+  'Jordan':                 'JOR',
   // Grupo K
-  'Colombia':             'COL',
-  'Portugal':             'POR',
-  'Chile':                'CHI',
-  'Uzbekistan':           'JAM',    // Uzbekistan no en 48, mapear a Jamaica
-  'Congo DR':             'COL',    // Congo DR no en 48 — Colombia slot
+  'Portugal':               'POR',
+  'Congo DR':               'COD',
+  'Uzbekistan':             'UZB',
+  'Colombia':               'COL',
   // Grupo L
-  'Croatia':              'CRO',
-  'England':              'ENG',
-  'Panama':               'PAN',
-  'Serbia':               'SRB',    // Alias directo
+  'England':                'ENG',
+  'Croatia':                'CRO',
+  'Ghana':                  'GHA',
+  'Panama':                 'PAN',
 };
 
 // ============================================================

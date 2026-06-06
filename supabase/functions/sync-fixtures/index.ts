@@ -22,69 +22,64 @@ const FEED_NAME_TO_CODE: Record<string, string> = {
   "Mexico":                 "MEX",
   "South Africa":           "RSA",
   "Korea Republic":         "KOR",
-  "New Zealand":            "NZL",
-  "Czechia":                "SRB",    // proxy: Serbia ocupa slot A
+  "Czechia":                "CZE",
   // Grupo B
   "Canada":                 "CAN",
+  "Bosnia and Herzegovina": "BIH",
   "Qatar":                  "QAT",
   "Switzerland":            "SUI",
-  "Bosnia and Herzegovina": "SWE",    // proxy: Sweden ocupa slot B
   // Grupo C
   "Brazil":                 "BRA",
   "Morocco":                "MAR",
-  "Ghana":                  "GHA",
-  "Haiti":                  "JPN",    // proxy: Japan ocupa slot C
-  "Scotland":               "JPN",    // proxy
+  "Haiti":                  "HTI",
+  "Scotland":               "SCO",
   // Grupo D
-  "Argentina":              "ARG",
   "USA":                    "USA",
+  "Paraguay":               "PRY",
   "Australia":              "AUS",
-  "Türkiye":                "DEN",    // proxy: Denmark ocupa slot D
-  "Turkey":                 "DEN",    // alias
-  "Paraguay":               "IRQ",    // proxy: Iraq slot en D
+  "Türkiye":                "TUR",
+  "Turkey":                 "TUR", // alias
   // Grupo E
   "Germany":                "GER",
+  "Curaçao":                "CUW",
   "Côte d'Ivoire":          "CIV",
   "Ecuador":                "ECU",
-  "Curaçao":                "VEN",    // proxy: Venezuela ocupa slot E
   // Grupo F
-  "Japan":                  "JPN",
   "Netherlands":            "NED",
+  "Japan":                  "JPN",
   "Sweden":                 "SWE",
   "Tunisia":                "TUN",
   // Grupo G
   "Belgium":                "BEL",
   "Egypt":                  "EGY",
   "IR Iran":                "IRN",
-  "Iran":                   "IRN",    // alias
+  "Iran":                   "IRN", // alias
+  "New Zealand":            "NZL",
   // Grupo H
   "Spain":                  "ESP",
-  "Uruguay":                "URU",
-  "Poland":                 "POL",
+  "Cabo Verde":             "CPV",
   "Saudi Arabia":           "KSA",
-  "Cabo Verde":             "MLI",    // proxy: Mali slot en H
+  "Uruguay":                "URU",
   // Grupo I
   "France":                 "FRA",
-  "Iraq":                   "IRQ",
   "Senegal":                "SEN",
-  "Norway":                 "PER",    // proxy: Peru slot en I
+  "Iraq":                   "IRQ",
+  "Norway":                 "NOR",
   // Grupo J
+  "Argentina":              "ARG",
   "Algeria":                "ALG",
-  "Italy":                  "ITA",
-  "Austria":                "CMR",    // proxy: Cameroon slot en J
-  "Jordan":                 "CRC",    // proxy: Costa Rica slot en J
+  "Austria":                "AUT",
+  "Jordan":                 "JOR",
   // Grupo K
-  "Colombia":               "COL",
   "Portugal":               "POR",
-  "Chile":                  "CHI",
-  "Uzbekistan":             "JAM",    // proxy: Jamaica slot en K
-  "Congo DR":               "COL",    // proxy: Colombia slot en K
+  "Congo DR":               "COD",
+  "Uzbekistan":             "UZB",
+  "Colombia":               "COL",
   // Grupo L
-  "Croatia":                "CRO",
   "England":                "ENG",
+  "Croatia":                "CRO",
+  "Ghana":                  "GHA",
   "Panama":                 "PAN",
-  "Serbia":                 "SRB",    // alias directo
-  "Nigeria":                "NGA",    // ya en BD
 };
 
 // Mapeo location del feed → UUID de estadio en BD (IDs semánticos del seed)
