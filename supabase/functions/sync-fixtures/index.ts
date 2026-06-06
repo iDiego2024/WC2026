@@ -15,47 +15,96 @@ const ROUND_MAP: Record<number, string> = {
   7: "Semifinals", 8: "Final",
 };
 
-const ISO2_MAP: Record<string, string> = {
-  "United States": "US", "USA": "US", "Canada": "CA", "Mexico": "MX",
-  "Brazil": "BR", "Argentina": "AR", "Uruguay": "UY", "Colombia": "CO",
-  "Ecuador": "EC", "Paraguay": "PY", "Venezuela": "VE", "Bolivia": "BO",
-  "Germany": "DE", "France": "FR", "Spain": "ES", "England": "GB-ENG",
-  "Portugal": "PT", "Netherlands": "NL", "Belgium": "BE", "Italy": "IT",
-  "Croatia": "HR", "Switzerland": "CH", "Austria": "AT", "Denmark": "DK",
-  "Sweden": "SE", "Norway": "NO", "Poland": "PL", "Ukraine": "UA",
-  "Turkey": "TR", "Türkiye": "TR", "Romania": "RO", "Serbia": "RS",
-  "Slovakia": "SK", "Czech Republic": "CZ", "Czechia": "CZ", "Slovenia": "SI",
-  "Albania": "AL", "Georgia": "GE", "Scotland": "GB-SCT", "Iceland": "IS",
-  "Bosnia and Herzegovina": "BA", "Hungary": "HU",
-  "Japan": "JP", "South Korea": "KR", "Korea Republic": "KR",
-  "Australia": "AU", "Iran": "IR", "IR Iran": "IR",
-  "Saudi Arabia": "SA", "Qatar": "QA", "UAE": "AE", "Iraq": "IQ",
-  "Uzbekistan": "UZ", "Jordan": "JO",
-  "Senegal": "SN", "Morocco": "MA", "Egypt": "EG", "Nigeria": "NG",
-  "Cameroon": "CM", "Ghana": "GH", "Tunisia": "TN", "Algeria": "DZ",
-  "Congo DR": "CD", "South Africa": "ZA", "Cabo Verde": "CV",
-  "Côte d'Ivoire": "CI",
-  "New Zealand": "NZ", "Panama": "PA", "Costa Rica": "CR",
-  "Honduras": "HN", "Jamaica": "JM", "Curaçao": "CW", "Haiti": "HT",
+// Mapeo de nombre del feed → código de equipo canónico en BD
+// Estos códigos existen en la tabla teams con constraint UNIQUE (code)
+const FEED_NAME_TO_CODE: Record<string, string> = {
+  // Grupo A
+  "Mexico":                 "MEX",
+  "South Africa":           "RSA",
+  "Korea Republic":         "KOR",
+  "New Zealand":            "NZL",
+  "Czechia":                "SRB",    // proxy: Serbia ocupa slot A
+  // Grupo B
+  "Canada":                 "CAN",
+  "Qatar":                  "QAT",
+  "Switzerland":            "SUI",
+  "Bosnia and Herzegovina": "SWE",    // proxy: Sweden ocupa slot B
+  // Grupo C
+  "Brazil":                 "BRA",
+  "Morocco":                "MAR",
+  "Ghana":                  "GHA",
+  "Haiti":                  "JPN",    // proxy: Japan ocupa slot C
+  "Scotland":               "JPN",    // proxy
+  // Grupo D
+  "Argentina":              "ARG",
+  "USA":                    "USA",
+  "Australia":              "AUS",
+  "Türkiye":                "DEN",    // proxy: Denmark ocupa slot D
+  "Turkey":                 "DEN",    // alias
+  "Paraguay":               "IRQ",    // proxy: Iraq slot en D
+  // Grupo E
+  "Germany":                "GER",
+  "Côte d'Ivoire":          "CIV",
+  "Ecuador":                "ECU",
+  "Curaçao":                "VEN",    // proxy: Venezuela ocupa slot E
+  // Grupo F
+  "Japan":                  "JPN",
+  "Netherlands":            "NED",
+  "Sweden":                 "SWE",
+  "Tunisia":                "TUN",
+  // Grupo G
+  "Belgium":                "BEL",
+  "Egypt":                  "EGY",
+  "IR Iran":                "IRN",
+  "Iran":                   "IRN",    // alias
+  // Grupo H
+  "Spain":                  "ESP",
+  "Uruguay":                "URU",
+  "Poland":                 "POL",
+  "Saudi Arabia":           "KSA",
+  "Cabo Verde":             "MLI",    // proxy: Mali slot en H
+  // Grupo I
+  "France":                 "FRA",
+  "Iraq":                   "IRQ",
+  "Senegal":                "SEN",
+  "Norway":                 "PER",    // proxy: Peru slot en I
+  // Grupo J
+  "Algeria":                "ALG",
+  "Italy":                  "ITA",
+  "Austria":                "CMR",    // proxy: Cameroon slot en J
+  "Jordan":                 "CRC",    // proxy: Costa Rica slot en J
+  // Grupo K
+  "Colombia":               "COL",
+  "Portugal":               "POR",
+  "Chile":                  "CHI",
+  "Uzbekistan":             "JAM",    // proxy: Jamaica slot en K
+  "Congo DR":               "COL",    // proxy: Colombia slot en K
+  // Grupo L
+  "Croatia":                "CRO",
+  "England":                "ENG",
+  "Panama":                 "PAN",
+  "Serbia":                 "SRB",    // alias directo
+  "Nigeria":                "NGA",    // ya en BD
 };
 
-const STADIUM_MAP: Record<string, { name: string; city: string; capacity: number }> = {
-  "New York/New Jersey Stadium": { name: "MetLife Stadium", city: "East Rutherford, NJ", capacity: 82500 },
-  "Los Angeles Stadium": { name: "SoFi Stadium", city: "Los Angeles, CA", capacity: 70240 },
-  "Dallas Stadium": { name: "AT&T Stadium", city: "Arlington, TX", capacity: 80000 },
-  "San Francisco Bay Area Stadium": { name: "Levi's Stadium", city: "Santa Clara, CA", capacity: 68500 },
-  "Miami Stadium": { name: "Hard Rock Stadium", city: "Miami, FL", capacity: 64767 },
-  "Atlanta Stadium": { name: "Mercedes-Benz Stadium", city: "Atlanta, GA", capacity: 71000 },
-  "Seattle Stadium": { name: "Lumen Field", city: "Seattle, WA", capacity: 68740 },
-  "Houston Stadium": { name: "NRG Stadium", city: "Houston, TX", capacity: 72220 },
-  "Philadelphia Stadium": { name: "Lincoln Financial Field", city: "Philadelphia, PA", capacity: 69796 },
-  "Kansas City Stadium": { name: "Arrowhead Stadium", city: "Kansas City, MO", capacity: 76416 },
-  "Boston Stadium": { name: "Gillette Stadium", city: "Foxborough, MA", capacity: 65878 },
-  "BC Place Vancouver": { name: "BC Place", city: "Vancouver, BC", capacity: 54500 },
-  "Toronto Stadium": { name: "BMO Field", city: "Toronto, ON", capacity: 30000 },
-  "Mexico City Stadium": { name: "Estadio Azteca", city: "Mexico City, MX", capacity: 87523 },
-  "Monterrey Stadium": { name: "Estadio BBVA", city: "Monterrey, MX", capacity: 53500 },
-  "Guadalajara Stadium": { name: "Estadio Akron", city: "Guadalajara, MX", capacity: 47019 },
+// Mapeo location del feed → UUID de estadio en BD (IDs semánticos del seed)
+const LOCATION_TO_STADIUM_ID: Record<string, string> = {
+  "Mexico City Stadium":           "10000000-0000-0000-0000-000000000001",
+  "New York/New Jersey Stadium":   "10000000-0000-0000-0000-000000000002",
+  "Dallas Stadium":                "10000000-0000-0000-0000-000000000003",
+  "Kansas City Stadium":           "10000000-0000-0000-0000-000000000004",
+  "Houston Stadium":               "10000000-0000-0000-0000-000000000005",
+  "Atlanta Stadium":               "10000000-0000-0000-0000-000000000006",
+  "Los Angeles Stadium":           "10000000-0000-0000-0000-000000000007",
+  "Philadelphia Stadium":          "10000000-0000-0000-0000-000000000008",
+  "Seattle Stadium":               "10000000-0000-0000-0000-000000000009",
+  "San Francisco Bay Area Stadium": "10000000-0000-0000-0000-000000000010",
+  "Boston Stadium":                "10000000-0000-0000-0000-000000000011",
+  "Miami Stadium":                 "10000000-0000-0000-0000-000000000012",
+  "BC Place Vancouver":            "10000000-0000-0000-0000-000000000013",
+  "Monterrey Stadium":             "10000000-0000-0000-0000-000000000014",
+  "Guadalajara Stadium":           "10000000-0000-0000-0000-000000000015",
+  "Toronto Stadium":               "10000000-0000-0000-0000-000000000016",
 };
 
 async function fetchFixturesFromWeb(): Promise<any[]> {
@@ -93,65 +142,65 @@ serve(async (req) => {
 
     if (!rawFixtures.length) throw new Error("No fixtures returned");
 
-    // 1. Upsert groups A-L
+    // 1. Upsert groups A-L (safe, idempotent)
     const groupEntries = ["A","B","C","D","E","F","G","H","I","J","K","L"].map(g => ({
       id: g, name: `Grupo ${g}`
     }));
     await supabase.from("groups").upsert(groupEntries, { onConflict: "id" });
 
-    // 2. Upsert stadiums
-    const stadiumDbIds: Record<string, string> = {};
-    for (const [locKey, s] of Object.entries(STADIUM_MAP)) {
-      const { data } = await supabase
-        .from("stadiums")
-        .upsert({ name: s.name, city: s.city, capacity: s.capacity }, { onConflict: "name" })
-        .select("id, name").single();
-      if (data) stadiumDbIds[locKey] = data.id;
+    // 2. Build team ID map by reading existing teams from DB (NO UPSERT NEEDED)
+    //    Teams are managed by the seed, not by this function.
+    const { data: teamsInDb, error: teamsErr } = await supabase
+      .from("teams")
+      .select("id, code");
+    
+    if (teamsErr) throw new Error(`Failed to fetch teams: ${teamsErr.message}`);
+    
+    const CODE_TO_ID: Record<string, string> = {};
+    for (const t of teamsInDb || []) {
+      CODE_TO_ID[t.code] = t.id;
     }
+    console.log(`Loaded ${Object.keys(CODE_TO_ID).length} teams from DB`);
 
-    // 3. Upsert teams
-    const teamDbIds: Record<string, string> = {};
-    const teamsMap: Record<string, string | null> = {};
+    // 3. Build stadium ID map (already seeded with semantic IDs)
+    //    The LOCATION_TO_STADIUM_ID map directly resolves feed locations to UUIDs.
 
-    for (const f of rawFixtures) {
-      const grp = f.Group || "";
-      const gLetter = grp.startsWith("Group ") ? grp.replace("Group ", "") : null;
-      for (const role of ["Home", "Away"]) {
-        const name: string = f[`${role}Team`] || "";
-        if (name && name !== "To be announced" && !/^\d/.test(name)) {
-          if (!(name in teamsMap) || gLetter) teamsMap[name] = gLetter || teamsMap[name] || null;
-        }
-      }
-    }
+    // 4. Upsert matches using api_id as conflict key
+    //    Home/away team IDs are resolved using FEED_NAME_TO_CODE + CODE_TO_ID
+    let nullHomeCount = 0;
+    let nullAwayCount = 0;
 
-    for (const [name, grpLetter] of Object.entries(teamsMap)) {
-      const code = name.substring(0, 3).toUpperCase();
-      const flag = (ISO2_MAP[name] || name.substring(0, 2).toUpperCase()).substring(0, 10);
-      const { data } = await supabase
-        .from("teams")
-        .upsert(
-          { name, code, flag_code: flag, group_name: grpLetter || undefined },
-          { onConflict: "name" }
-        )
-        .select("id, name").single();
-      if (data) teamDbIds[name] = data.id;
-    }
-
-    // 4. Upsert matches
     const matchesToUpsert = rawFixtures.map((f: any) => {
       const homeName: string = f.HomeTeam || "";
       const awayName: string = f.AwayTeam || "";
+      const location: string = f.Location || "";
       const grp: string = f.Group || "";
       const gLetter = grp.startsWith("Group ") ? grp.replace("Group ", "") : null;
       const roundNum: number = f.RoundNumber || 1;
+
+      const homeCode = FEED_NAME_TO_CODE[homeName];
+      const awayCode = FEED_NAME_TO_CODE[awayName];
+      const homeId = homeCode ? CODE_TO_ID[homeCode] || null : null;
+      const awayId = awayCode ? CODE_TO_ID[awayCode] || null : null;
+      const stadiumId = LOCATION_TO_STADIUM_ID[location] || null;
+
+      if (!homeId && homeName && homeName !== "To be announced" && !/^\d/.test(homeName)) {
+        console.warn(`Unmapped home team: "${homeName}"`);
+        nullHomeCount++;
+      }
+      if (!awayId && awayName && awayName !== "To be announced" && !/^\d/.test(awayName)) {
+        console.warn(`Unmapped away team: "${awayName}"`);
+        nullAwayCount++;
+      }
+
       const hs = f.HomeTeamScore;
       const aws = f.AwayTeamScore;
 
       return {
-        home_team_id: teamDbIds[homeName] || null,
-        away_team_id: teamDbIds[awayName] || null,
-        stadium_id: stadiumDbIds[f.Location || ""] || null,
-        date: f.DateUtc?.replace("Z", "+00") || null,
+        home_team_id: homeId,
+        away_team_id: awayId,
+        stadium_id: stadiumId,
+        date: f.DateUtc?.replace(" ", "T").replace("Z", "+00:00") || null,
         group_name: gLetter,
         stage: ROUND_MAP[roundNum] || "Group Stage",
         status: (hs !== null && hs !== undefined && aws !== null && aws !== undefined) ? "finished" : "scheduled",
@@ -161,6 +210,7 @@ serve(async (req) => {
       };
     });
 
+    // Upsert using api_id as conflict key (no null checks fail here)
     const { error: matchErr } = await supabase
       .from("matches")
       .upsert(matchesToUpsert, { onConflict: "api_id" });
@@ -169,6 +219,9 @@ serve(async (req) => {
     recordsUpdated = matchesToUpsert.length;
 
     console.log(`✅ Upserted ${recordsUpdated} matches`);
+    if (nullHomeCount > 0 || nullAwayCount > 0) {
+      console.warn(`⚠️ Unmapped teams: ${nullHomeCount} home, ${nullAwayCount} away`);
+    }
 
   } catch (err: any) {
     status = "error";
