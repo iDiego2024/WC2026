@@ -11,8 +11,10 @@ import {
   runFullAudit, runApiValidation, getRealDataCoverageMatrix, 
   AuditResult, ApiValidationReport, CoverageMatrix 
 } from '../utils/auditEngine';
+import { useLanguage } from "../context/LanguageContext";
 
 export function OpsView() {
+  const { t } = useLanguage();
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [triggering, setTriggering] = useState<Record<string, boolean>>({});
@@ -81,12 +83,12 @@ export function OpsView() {
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
-      alert(`Sync function '${fnName}' triggered successfully.`);
+      alert(t(`Sincronización '${fnName}' ejecutada con éxito.`, `Sync function '${fnName}' triggered successfully.`));
       fetchLogs();
       executeAudit();
     } catch (e: any) {
       console.error(e);
-      alert(`Error triggering '${fnName}': ${e.message}`);
+      alert(t(`Error ejecutando '${fnName}': ${e.message}`, `Error triggering '${fnName}': ${e.message}`));
     } finally {
       setTriggering(prev => ({ ...prev, [fnName]: false }));
     }
@@ -95,9 +97,6 @@ export function OpsView() {
   const handleSelfRepair = async () => {
     setRepairing(true);
     try {
-      // Execute self repair using RPC or automated script endpoint if exists,
-      // otherwise we perform quick client-side remediation queries.
-      // E.g., clean orphaned match predictions or fix null ratings/ranks
       const { error: teamErr } = await supabase
         .from('teams')
         .update({ elo_rating: 1500 })
@@ -105,10 +104,10 @@ export function OpsView() {
 
       if (teamErr) throw teamErr;
       
-      alert("Self-repair completed! Null/broken Team attributes updated to defaults.");
+      alert(t("¡Auto-reparación completada! Los atributos nulos de los equipos fueron actualizados.", "Self-repair completed! Null/broken Team attributes updated to defaults."));
       executeAudit();
     } catch (err: any) {
-      alert(`Self-repair failed: ${err.message}`);
+      alert(t(`La auto-reparación falló: ${err.message}`, `Self-repair failed: ${err.message}`));
     } finally {
       setRepairing(false);
     }
@@ -122,13 +121,13 @@ export function OpsView() {
     : 0;
 
   // Production Readiness Metrics (Formula)
-  const functionalCompleteness = 95; // core tournament, twin, predictor, ops, dashboard
+  const functionalCompleteness = 95;
   const realDataRatio = apiReport ? apiReport.matchRate : 85;
   const technicalDebt = auditResult?.passed ? 5 : 15;
   const publicBetaReady = Math.round((functionalCompleteness * 0.4) + (realDataRatio * 0.4) + ((100 - technicalDebt) * 0.2));
   
   let classification = "BETA";
-  if (publicBetaReady >= 90) classification = "RELEASE CANDIDATE";
+  if (publicBetaReady >= 90) classification = t("CANDIDATO A LANZAMIENTO", "RELEASE CANDIDATE");
   else if (publicBetaReady >= 75) classification = "BETA PÚBLICA";
   else if (publicBetaReady >= 60) classification = "BETA";
   else classification = "ALPHA";
@@ -141,9 +140,11 @@ export function OpsView() {
         <div>
           <h1 className="text-2xl font-black tracking-tight text-white uppercase flex items-center gap-3">
             <Server className="w-6 h-6 text-primary" />
-            Operations & Observability Center
+            {t('Centro de Operaciones y Observabilidad', 'Operations & Observability Center')}
           </h1>
-          <p className="text-xs text-slate-400 font-medium tracking-wide uppercase">System Health, Data Auditing, and Production Hardening Monitor</p>
+          <p className="text-xs text-slate-400 font-medium tracking-wide uppercase">
+            {t('Monitoreo de Salud del Sistema, Auditoría de Datos y Hardening de Producción', 'System Health, Data Auditing, and Production Hardening Monitor')}
+          </p>
         </div>
         
         <div className="flex gap-2">
@@ -154,7 +155,7 @@ export function OpsView() {
             className="text-xs font-bold uppercase h-9 bg-secondary hover:bg-secondary/80 border border-border"
           >
             <RefreshCw className={`w-3.5 h-3.5 mr-2 ${auditing ? 'animate-spin' : ''}`} />
-            Run Audit
+            {t('Ejecutar Auditoría', 'Run Audit')}
           </Button>
           <Button 
             size="sm"
@@ -163,7 +164,7 @@ export function OpsView() {
             className="text-xs font-bold uppercase h-9 bg-primary hover:bg-primary/95 text-white"
           >
             <Settings className={`w-3.5 h-3.5 mr-2 ${repairing ? 'animate-spin' : ''}`} />
-            Auto-Repair DB
+            {t('Auto-Reparar BD', 'Auto-Repair DB')}
           </Button>
         </div>
       </header>
@@ -172,20 +173,20 @@ export function OpsView() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-card border-border">
           <CardContent className="p-4">
-            <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Edge Functions</span>
+            <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">{t('Edge Functions', 'Edge Functions')}</span>
             <div className="text-2xl font-black text-white font-mono mt-1">
               {logs.length > 0 ? `${Math.round(((logs.length - totalErrors) / logs.length) * 100)}%` : '100%'}
-              <span className="text-xs font-normal text-slate-400 ml-1">Success</span>
+              <span className="text-xs font-normal text-slate-400 ml-1">{t('Éxito', 'Success')}</span>
             </div>
             <div className="text-[9px] text-slate-500 mt-1.5 flex items-center gap-1">
-              <Clock className="w-3 h-3" /> Avg Latency: {avgLatency}ms
+              <Clock className="w-3 h-3" /> {t('Latencia Prom', 'Avg Latency')}: {avgLatency}ms
             </div>
           </CardContent>
         </Card>
 
         <Card className="bg-card border-border">
           <CardContent className="p-4">
-            <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">API-Football Quota</span>
+            <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">{t('Cuota de API-Football', 'API-Football Quota')}</span>
             <div className="text-2xl font-black text-white font-mono mt-1">
               {apiCallsCount} <span className="text-xs font-normal text-slate-400">/ 100 reqs</span>
             </div>
@@ -197,23 +198,23 @@ export function OpsView() {
 
         <Card className="bg-card border-border">
           <CardContent className="p-4">
-            <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Gemini AI Usage</span>
+            <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">{t('Uso de Gemini IA', 'Gemini AI Usage')}</span>
             <div className="text-2xl font-black text-white font-mono mt-1">
-              1,240 <span className="text-xs font-normal text-slate-400">Tokens</span>
+              1,240 <span className="text-xs font-normal text-slate-400">{t('Tokens', 'Tokens')}</span>
             </div>
             <div className="text-[9px] text-slate-500 mt-1.5 flex items-center gap-1">
-              <Zap className="w-3 h-3 text-yellow-500" /> Active Assistant Contexts
+              <Zap className="w-3 h-3 text-yellow-500" /> {t('Contextos Activos de Asistente', 'Active Assistant Contexts')}
             </div>
           </CardContent>
         </Card>
 
         <Card className="bg-card border-border">
           <CardContent className="p-4">
-            <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Supabase Realtime</span>
+            <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">{t('Supabase Realtime', 'Supabase Realtime')}</span>
             <div className="text-2xl font-black text-emerald-400 font-mono mt-1 flex items-center gap-1.5">
-              <ShieldCheck className="w-5 h-5 text-emerald-400" /> ACTIVE
+              <ShieldCheck className="w-5 h-5 text-emerald-400" /> {t('ACTIVO', 'ACTIVE')}
             </div>
-            <div className="text-[9px] text-slate-500 mt-1.5">Connected to WebSocket server</div>
+            <div className="text-[9px] text-slate-500 mt-1.5">{t('Conectado al servidor WebSocket', 'Connected to WebSocket server')}</div>
           </CardContent>
         </Card>
       </div>
@@ -224,10 +225,10 @@ export function OpsView() {
         <div className="lg:col-span-6 space-y-6">
           <Card className="bg-card border-border">
             <CardHeader className="p-4 border-b border-border/50 bg-secondary/30 flex flex-row items-center justify-between">
-              <CardTitle className="text-xs font-black uppercase text-slate-200">Data Integrity Audit Panel</CardTitle>
+              <CardTitle className="text-xs font-black uppercase text-slate-200">{t('Panel de Auditoría de Integridad de Datos', 'Data Integrity Audit Panel')}</CardTitle>
               {auditResult && (
                 <Badge className={auditResult.passed ? "bg-emerald-500/15 text-emerald-400" : "bg-red-500/15 text-red-400"}>
-                  {auditResult.passed ? "PASSED" : "ISSUES FOUND"}
+                  {auditResult.passed ? t("APROBADO", "PASSED") : t("PROBLEMAS DETECTADOS", "ISSUES FOUND")}
                 </Badge>
               )}
             </CardHeader>
@@ -236,46 +237,46 @@ export function OpsView() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
                   
                   <div className="bg-secondary/40 p-3 rounded-lg border border-border/50">
-                    <span className="text-[10px] font-black uppercase text-primary">Teams ({auditResult.teams.total})</span>
+                    <span className="text-[10px] font-black uppercase text-primary">{t('Equipos', 'Teams')} ({auditResult.teams.total})</span>
                     <ul className="mt-2 space-y-1 text-slate-300 text-[11px]">
-                      <li>• Duplicates: {auditResult.teams.duplicates.length}</li>
-                      <li>• Null API IDs: {auditResult.teams.nullApiIds}</li>
-                      <li>• Null FIFA Ranks: {auditResult.teams.nullFifaRanks}</li>
-                      <li>• Null ELO Ratings: {auditResult.teams.nullEloRatings}</li>
+                      <li>• {t('Duplicados', 'Duplicates')}: {auditResult.teams.duplicates.length}</li>
+                      <li>• {t('IDs de API Nulos', 'Null API IDs')}: {auditResult.teams.nullApiIds}</li>
+                      <li>• {t('Ranks FIFA Nulos', 'Null FIFA Ranks')}: {auditResult.teams.nullFifaRanks}</li>
+                      <li>• {t('Ratings ELO Nulos', 'Null ELO Ratings')}: {auditResult.teams.nullEloRatings}</li>
                     </ul>
                   </div>
 
                   <div className="bg-secondary/40 p-3 rounded-lg border border-border/50">
-                    <span className="text-[10px] font-black uppercase text-primary">Stadiums ({auditResult.stadiums.total})</span>
+                    <span className="text-[10px] font-black uppercase text-primary">{t('Estadios', 'Stadiums')} ({auditResult.stadiums.total})</span>
                     <ul className="mt-2 space-y-1 text-slate-300 text-[11px]">
-                      <li>• Duplicates: {auditResult.stadiums.duplicates.length}</li>
-                      <li>• Null API IDs: {auditResult.stadiums.nullApiIds}</li>
-                      <li>• Null Capacities: {auditResult.stadiums.nullCapacities}</li>
-                      <li>• Empty Cities: {auditResult.stadiums.emptyCities}</li>
+                      <li>• {t('Duplicados', 'Duplicates')}: {auditResult.stadiums.duplicates.length}</li>
+                      <li>• {t('IDs de API Nulos', 'Null API IDs')}: {auditResult.stadiums.nullApiIds}</li>
+                      <li>• {t('Capacidades Nulas', 'Null Capacities')}: {auditResult.stadiums.nullCapacities}</li>
+                      <li>• {t('Ciudades Vacías', 'Empty Cities')}: {auditResult.stadiums.emptyCities}</li>
                     </ul>
                   </div>
 
                   <div className="bg-secondary/40 p-3 rounded-lg border border-border/50">
-                    <span className="text-[10px] font-black uppercase text-primary">Matches ({auditResult.matches.total})</span>
+                    <span className="text-[10px] font-black uppercase text-primary">{t('Partidos', 'Matches')} ({auditResult.matches.total})</span>
                     <ul className="mt-2 space-y-1 text-slate-300 text-[11px]">
-                      <li>• Null Home Teams: {auditResult.matches.nullHomeTeams}</li>
-                      <li>• Null Away Teams: {auditResult.matches.nullAwayTeams}</li>
-                      <li>• Null Stadiums: {auditResult.matches.nullStadiums}</li>
-                      <li>• Orphans / Bad FKs: {auditResult.matches.orphans.length}</li>
+                      <li>• {t('Equipos Locales Nulos', 'Null Home Teams')}: {auditResult.matches.nullHomeTeams}</li>
+                      <li>• {t('Equipos Visitantes Nulos', 'Null Away Teams')}: {auditResult.matches.nullAwayTeams}</li>
+                      <li>• {t('Estadios Nulos', 'Null Stadiums')}: {auditResult.matches.nullStadiums}</li>
+                      <li>• {t('Huérfanos / FKs Inválidos', 'Orphans / Bad FKs')}: {auditResult.matches.orphans.length}</li>
                     </ul>
                   </div>
 
                   <div className="bg-secondary/40 p-3 rounded-lg border border-border/50">
-                    <span className="text-[10px] font-black uppercase text-primary">Players ({auditResult.players.total})</span>
+                    <span className="text-[10px] font-black uppercase text-primary">{t('Jugadores', 'Players')} ({auditResult.players.total})</span>
                     <ul className="mt-2 space-y-1 text-slate-300 text-[11px]">
-                      <li>• Unassigned Team: {auditResult.players.noTeam}</li>
-                      <li>• Empty Names: {auditResult.players.emptyNames}</li>
-                      <li>• Inconsistent Stats: {auditResult.players.inconsistentStats}</li>
+                      <li>• {t('Sin Equipo Asignado', 'Unassigned Team')}: {auditResult.players.noTeam}</li>
+                      <li>• {t('Nombres Vacíos', 'Empty Names')}: {auditResult.players.emptyNames}</li>
+                      <li>• {t('Estadísticas Inconsistentes', 'Inconsistent Stats')}: {auditResult.players.inconsistentStats}</li>
                     </ul>
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-6 text-slate-400 text-xs">Run auditing to load report details.</div>
+                <div className="text-center py-6 text-slate-400 text-xs">{t('Ejecuta la auditoría para cargar los detalles del reporte.', 'Run auditing to load report details.')}</div>
               )}
             </CardContent>
           </Card>
@@ -283,39 +284,39 @@ export function OpsView() {
           {/* API-Football Validation Report */}
           <Card className="bg-card border-border">
             <CardHeader className="p-4 border-b border-border/50 bg-secondary/30">
-              <CardTitle className="text-xs font-black uppercase text-slate-200">API-Football Comparison Report</CardTitle>
+              <CardTitle className="text-xs font-black uppercase text-slate-200">{t('Reporte de Comparación API-Football', 'API-Football Comparison Report')}</CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-4">
               {apiReport ? (
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-secondary/40 p-3 rounded-lg border border-border text-center">
-                      <span className="text-[10px] font-black uppercase text-slate-400">Match Sync Rate</span>
+                      <span className="text-[10px] font-black uppercase text-slate-400">{t('Tasa de Sincronización de Partidos', 'Match Sync Rate')}</span>
                       <div className="text-2xl font-black text-white font-mono mt-1">{apiReport.matchRate}%</div>
                     </div>
                     <div className="bg-secondary/40 p-3 rounded-lg border border-border text-center">
-                      <span className="text-[10px] font-black uppercase text-slate-400">Log Success Rate</span>
+                      <span className="text-[10px] font-black uppercase text-slate-400">{t('Tasa de Éxito de Logs', 'Log Success Rate')}</span>
                       <div className="text-2xl font-black text-white font-mono mt-1">{apiReport.syncRate}%</div>
                     </div>
                   </div>
 
                   <div className="divide-y divide-border/50 text-xs font-mono">
                     <div className="py-2 flex justify-between">
-                      <span className="text-slate-400">Missing Records (vs Feed 104):</span>
+                      <span className="text-slate-400">{t('Registros Faltantes (vs Feed 104):', 'Missing Records (vs Feed 104):')}</span>
                       <span className="text-white font-bold">{apiReport.missingRecords}</span>
                     </div>
                     <div className="py-2 flex justify-between">
-                      <span className="text-slate-400">Outdated Records:</span>
+                      <span className="text-slate-400">{t('Registros Desactualizados:', 'Outdated Records:')}</span>
                       <span className="text-amber-400 font-bold">{apiReport.outdatedRecords}</span>
                     </div>
                     <div className="py-2 flex justify-between">
-                      <span className="text-slate-400">Inconsistent Records:</span>
+                      <span className="text-slate-400">{t('Registros Inconsistentes:', 'Inconsistent Records:')}</span>
                       <span className="text-red-400 font-bold">{apiReport.inconsistentRecords}</span>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-6 text-slate-400 text-xs">Run API comparison to fetch rates.</div>
+                <div className="text-center py-6 text-slate-400 text-xs">{t('Ejecuta la comparación de API para obtener las tasas.', 'Run API comparison to fetch rates.')}</div>
               )}
             </CardContent>
           </Card>
@@ -325,17 +326,17 @@ export function OpsView() {
         <div className="lg:col-span-6 space-y-6">
           <Card className="bg-card border-border">
             <CardHeader className="p-4 border-b border-border/50 bg-secondary/30">
-              <CardTitle className="text-xs font-black uppercase text-slate-200">Real Data Coverage Matrix</CardTitle>
+              <CardTitle className="text-xs font-black uppercase text-slate-200">{t('Matriz de Cobertura de Datos Reales', 'Real Data Coverage Matrix')}</CardTitle>
             </CardHeader>
             <CardContent className="p-0 overflow-x-auto">
               <table className="w-full text-xs font-mono text-left">
                 <thead>
                   <tr className="border-b border-border bg-black/10 text-[9px] uppercase text-slate-500 tracking-wider">
-                    <th className="p-3">View</th>
-                    <th className="p-3 text-center">Real</th>
-                    <th className="p-3 text-center">Simulated</th>
-                    <th className="p-3 text-center">Mock</th>
-                    <th className="p-3 text-center">Placeholder</th>
+                    <th className="p-3">{t('Vista', 'View')}</th>
+                    <th className="p-3 text-center">{t('Real', 'Real')}</th>
+                    <th className="p-3 text-center">{t('Simulado', 'Simulated')}</th>
+                    <th className="p-3 text-center">{t('Mock', 'Mock')}</th>
+                    <th className="p-3 text-center">{t('Marcador de Posición', 'Placeholder')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/50 text-[10px]">
@@ -356,16 +357,16 @@ export function OpsView() {
           {/* Production Readiness Classification */}
           <Card className="bg-card border-border">
             <CardHeader className="p-4 border-b border-border/50 bg-secondary/30">
-              <CardTitle className="text-xs font-black uppercase text-slate-200">Production Readiness Dashboard</CardTitle>
+              <CardTitle className="text-xs font-black uppercase text-slate-200">{t('Dashboard de Preparación para Producción', 'Production Readiness Dashboard')}</CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] font-black uppercase text-slate-400">Overall Readiness Index</span>
+                  <span className="text-[10px] font-black uppercase text-slate-400">{t('Índice General de Preparación', 'Overall Readiness Index')}</span>
                   <div className="text-3xl font-black text-primary font-mono mt-1">{publicBetaReady}%</div>
                 </div>
                 <div className="text-right">
-                  <span className="text-[10px] font-black uppercase text-slate-400 text-right block">Torunament Stage</span>
+                  <span className="text-[10px] font-black uppercase text-slate-400 text-right block">{t('Estado del Torneo', 'Torunament Stage')}</span>
                   <Badge className="bg-primary/20 text-primary border border-primary/30 text-xs font-bold uppercase mt-1">
                     {classification}
                   </Badge>
@@ -374,15 +375,15 @@ export function OpsView() {
 
               <div className="space-y-2 text-xs font-mono">
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Functional Completeness:</span>
+                  <span className="text-slate-400">{t('Completitud Funcional:', 'Functional Completeness:')}</span>
                   <span className="text-slate-200">{functionalCompleteness}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Real Data Coverage:</span>
+                  <span className="text-slate-400">{t('Cobertura de Datos Reales:', 'Real Data Coverage:')}</span>
                   <span className="text-slate-200">{realDataRatio}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Outstanding Technical Debt:</span>
+                  <span className="text-slate-400">{t('Deuda Técnica Pendiente:', 'Outstanding Technical Debt:')}</span>
                   <span className="text-red-400 font-bold">{technicalDebt}%</span>
                 </div>
               </div>
@@ -395,14 +396,14 @@ export function OpsView() {
       {/* Force Sync Controls */}
       <Card className="bg-card border-border">
         <CardHeader className="p-4 border-b border-border/50 bg-secondary/30">
-          <CardTitle className="text-xs font-black uppercase text-slate-200">Edge Function Operations</CardTitle>
+          <CardTitle className="text-xs font-black uppercase text-slate-200">{t('Operaciones de Edge Functions', 'Edge Function Operations')}</CardTitle>
         </CardHeader>
         <CardContent className="p-4 grid grid-cols-1 md:grid-cols-4 gap-4">
           {[
-            { name: 'sync-fixtures', label: 'Sync Fixtures', desc: 'Sync stadium, matches and team IDs.' },
-            { name: 'sync-live-matches', label: 'Live Matches Sync', desc: 'Sync active score updates.' },
-            { name: 'sync-rankings', label: 'FIFA / ELO rankings', desc: 'Recompute ELO matrix ratings.' },
-            { name: 'sync-standings', label: 'Standings calculation', desc: 'Recalculate standing statistics.' },
+            { name: 'sync-fixtures', label: t('Sincronizar Fixtures', 'Sync Fixtures'), desc: t('Sincroniza estadios, partidos e IDs de equipos.', 'Sync stadium, matches and team IDs.') },
+            { name: 'sync-live-matches', label: t('Sincronizar Partidos en Vivo', 'Live Matches Sync'), desc: t('Sincroniza actualizaciones de marcadores activos.', 'Sync active score updates.') },
+            { name: 'sync-rankings', label: t('Rankings FIFA / ELO', 'FIFA / ELO rankings'), desc: t('Recalcula los ratings de la matriz ELO.', 'Recompute ELO matrix ratings.') },
+            { name: 'sync-standings', label: t('Cálculo de Standings', 'Standings calculation'), desc: t('Recalculate standing statistics.', 'Recalculate standing statistics.') },
           ].map(fn => (
             <div key={fn.name} className="p-3 bg-secondary/40 border border-border rounded-lg flex flex-col justify-between">
               <div>
@@ -420,7 +421,7 @@ export function OpsView() {
                 ) : (
                   <Play className="w-3.5 h-3.5 mr-2" />
                 )}
-                Run {fn.name}
+                {t('Ejecutar', 'Run')} {fn.name}
               </Button>
             </div>
           ))}
