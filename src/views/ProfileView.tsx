@@ -5,7 +5,7 @@ import { profilesService } from '../services/api';
 import { AuthCard } from '../components/AuthCard';
 import { 
   Trophy, Award, Shield, Crown, Star, Flame, Zap, TrendingUp, 
-  Lock, Edit3, Save, Check, AlertCircle, User, MessageSquare, Flag, MapPin
+  Lock, Edit3, Save, Check, AlertCircle, User, MessageSquare, Flag, MapPin, Mail
 } from 'lucide-react';
 
 const iconMap: Record<string, React.ComponentType<any>> = {
@@ -136,14 +136,36 @@ export function ProfileView() {
 
               {/* Profile Info */}
               <div className="space-y-3">
-                <div>
-                  <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
-                    {user.display_name || 'Player'}
-                  </h1>
-                  <p className="text-xs text-slate-400 mt-1 flex items-center justify-center md:justify-start gap-1">
-                    <User className="w-3.5 h-3.5 text-primary" />
-                    ID: {user.id.substring(0, 8)}...
-                  </p>
+                <div className="space-y-1.5">
+                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5">
+                    <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+                      {user.display_name || 'Player'}
+                    </h1>
+                    {user.role === 'admin' ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-yellow-500/10 text-amber-400">
+                        <Crown className="w-3 h-3 animate-pulse" />
+                        Administrador
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border border-slate-700 bg-slate-800/60 text-slate-300">
+                        <User className="w-3 h-3 text-slate-400" />
+                        Usuario
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 text-xs text-slate-400">
+                    {user.email && (
+                      <span className="flex items-center gap-1">
+                        <Mail className="w-3.5 h-3.5 text-primary" />
+                        {user.email}
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1">
+                      <User className="w-3.5 h-3.5 text-slate-500" />
+                      ID: {user.id.substring(0, 8)}...
+                    </span>
+                  </div>
                 </div>
 
                 {user.bio ? (

@@ -1,6 +1,8 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Navigation } from './components/Navigation';
+import { AuthProvider } from './context/AuthContext';
+import { AdminRoute } from './components/auth/AdminRoute';
 
 // Lazy load views for optimal code-splitting
 const DashboardView = lazy(() => import('./views/DashboardView').then(m => ({ default: m.DashboardView })));
@@ -29,33 +31,35 @@ const LoadingSpinner = () => (
 
 export default function App() {
   return (
-    <Router>
-      <div className="min-h-screen bg-background text-foreground flex">
-        <Navigation />
-        <main className="flex-1 md:ml-56 p-4 md:p-6 pb-24 md:pb-6 w-full max-w-7xl mx-auto overflow-x-hidden">
-          <Suspense fallback={<LoadingSpinner />}>
-            <Routes>
-               <Route path="/" element={<DashboardView />} />
-               <Route path="/matches" element={<MatchesView />} />
-               <Route path="/groups" element={<GroupsView />} />
-               <Route path="/predictor" element={<PredictorView />} />
-               <Route path="/fantasy" element={<FantasyView />} />
-               <Route path="/simulator" element={<SimulatorView />} />
-               <Route path="/universe" element={<UniverseView />} />
-               <Route path="/twin" element={<TwinView />} />
-               <Route path="/assistant" element={<AssistantView />} />
-               <Route path="/community" element={<CommunityView />} />
-               <Route path="/tv" element={<TvModeView />} />
-               <Route path="/admin" element={<AdminStatusView />} />
-               <Route path="/ops" element={<OpsView />} />
-               <Route path="/profile" element={<ProfileView />} />
-               <Route path="/history" element={<PredictionHistoryView />} />
-               <Route path="/match/:id" element={<MatchDetailView />} />
-            </Routes>
-          </Suspense>
-        </main>
-      </div>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <div className="min-h-screen bg-background text-foreground flex">
+          <Navigation />
+          <main className="flex-1 md:ml-56 p-4 md:p-6 pb-24 md:pb-6 w-full max-w-7xl mx-auto overflow-x-hidden">
+            <Suspense fallback={<LoadingSpinner />}>
+              <Routes>
+                 <Route path="/" element={<DashboardView />} />
+                 <Route path="/matches" element={<MatchesView />} />
+                 <Route path="/groups" element={<GroupsView />} />
+                 <Route path="/predictor" element={<PredictorView />} />
+                 <Route path="/fantasy" element={<FantasyView />} />
+                 <Route path="/simulator" element={<SimulatorView />} />
+                 <Route path="/universe" element={<UniverseView />} />
+                 <Route path="/twin" element={<TwinView />} />
+                 <Route path="/assistant" element={<AssistantView />} />
+                 <Route path="/community" element={<CommunityView />} />
+                 <Route path="/tv" element={<TvModeView />} />
+                 <Route path="/admin" element={<AdminRoute><AdminStatusView /></AdminRoute>} />
+                 <Route path="/ops" element={<AdminRoute><OpsView /></AdminRoute>} />
+                 <Route path="/profile" element={<ProfileView />} />
+                 <Route path="/history" element={<PredictionHistoryView />} />
+                 <Route path="/match/:id" element={<MatchDetailView />} />
+              </Routes>
+            </Suspense>
+          </main>
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 

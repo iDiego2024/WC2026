@@ -24,14 +24,14 @@ const getNavItems = (t: (key: string) => string) => [
   { to: '/assistant', icon: Bot, label: t('nav.assistant') },
   { to: '/community', icon: Users, label: t('nav.community') },
   { to: '/tv', icon: Tv, label: t('nav.tv') },
-  { to: '/admin', icon: Activity, label: t('nav.dataOps') },
-  { to: '/ops', icon: Server, label: t('nav.opsCenter') },
+  { to: '/admin', icon: Activity, label: t('nav.dataOps'), adminOnly: true },
+  { to: '/ops', icon: Server, label: t('nav.opsCenter'), adminOnly: true },
 ];
 
 export function Navigation() {
   const { lang, setLang, t } = useLanguage();
-  const { user, signInWithGoogle, signOut } = useAuth() as any;
-  const navItems = getNavItems(t);
+  const { user, signInWithGoogle, signOut, isAdmin } = useAuth() as any;
+  const navItems = getNavItems(t).filter(item => !(item as any).adminOnly || isAdmin);
 
   return (
     <>

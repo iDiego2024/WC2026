@@ -146,6 +146,7 @@ export interface Database {
           rank_weekly: number | null
           rank_historic: number | null
           rank_previous: number | null
+          role: string | null
         }
         Insert: {
           id: string
@@ -167,6 +168,7 @@ export interface Database {
           rank_weekly?: number | null
           rank_historic?: number | null
           rank_previous?: number | null
+          role?: string | null
         }
         Update: {
           id?: string
@@ -188,6 +190,7 @@ export interface Database {
           rank_weekly?: number | null
           rank_historic?: number | null
           rank_previous?: number | null
+          role?: string | null
         }
       }
       match_predictions: {

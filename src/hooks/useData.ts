@@ -111,84 +111,21 @@ export function useMatch(id: string) {
   return { match, loading, error, refresh: fetchMatch };
 }
 
+import { useAuthContext } from '../context/AuthContext';
+
 export function useAuth() {
-  const [user, setUser] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  // Sync profile table with metadata from OAuth/Auth session
-  const syncProfile = async (sessionUser: any) => {
-    if (!sessionUser) return null;
-    try {
-      // Try to fetch profile first
-      let profile;
-      try {
-        profile = await profilesService.getProfile(sessionUser.id);
-      } catch (err) {
-        // Profile doesn't exist, create it
-        const displayName = sessionUser.user_metadata?.full_name || sessionUser.user_metadata?.name || sessionUser.email?.split('@')[0] || 'Player';
-        const photoUrl = sessionUser.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/adventurer/svg?seed=${sessionUser.id}`;
-        profile = await profilesService.updateProfile(sessionUser.id, displayName, photoUrl);
-      }
-      return profile;
-    } catch (e) {
-      console.error('Failed to sync profile:', e);
-      // Fallback to minimal user object
-      return {
-        id: sessionUser.id,
-        email: sessionUser.email,
-        display_name: sessionUser.user_metadata?.full_name || sessionUser.email?.split('@')[0] || 'User',
-        photo_url: sessionUser.user_metadata?.avatar_url,
-        score: 0
-      };
-    }
+  const context = useAuthContext();
+  return {
+    user: context.profile, // map profile to user for backwards compatibility
+    profile: context.profile,
+    rawUser: context.user, // exposing raw supabase auth user
+    isAuthenticated: context.isAuthenticated,
+    isAdmin: context.isAdmin,
+    loading: context.loading,
+    signInWithGoogle: context.signInWithGoogle,
+    signOut: context.signOut,
+    refreshUser: context.refreshUser
   };
-
-  useEffect(() => {
-    // 1. Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        syncProfile(session.user).then(profile => {
-          setUser(profile);
-          setLoading(false);
-        });
-      } else {
-        setUser(null);
-        setLoading(false);
-      }
-    });
-
-    // 2. Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        const profile = await syncProfile(session.user);
-        setUser(profile);
-      } else {
-        setUser(null);
-      }
-      setLoading(false);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin
-      }
-    });
-    if (error) throw error;
-  };
-
-  const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-  };
-
-  return { user, loading, signInWithGoogle, signOut };
 }
 
 export function usePredictions(userId: string | undefined) {
