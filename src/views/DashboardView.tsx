@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -20,6 +21,124 @@ export function DashboardView() {
 
   const isLoading = teamsLoading || matchesLoading;
   const error = teamsError || matchesError;
+
+  // Find featured match for the probability center
+  const featureMatch = useMemo(() => {
+    if (!matches || matches.length === 0) return null;
+    return matches.find(m => m.status === 'scheduled') || matches[0];
+  }, [matches]);
+
+  const fHome = featureMatch?.home_team;
+  const fAway = featureMatch?.away_team;
+
+  // Real Poisson probabilities for featureMatch
+  const probs = useMemo(() => {
+    if (!fHome || !fAway) return { home: 33, away: 33, draw: 34 };
+
+    const fHomeRank = fHome.fifa_rank || 50;
+    const fAwayRank = fAway.fifa_rank || 50;
+    const fHomeStrength = Math.max(10, 100 - fHomeRank * 0.85);
+    const fAwayStrength = Math.max(10, 100 - fAwayRank * 0.85);
+
+    let fHomeWins = 0;
+    let fAwayWins = 0;
+    let fDraws = 0;
+    for (let i = 0; i < 1000; i++) {
+      const sim = simulateMatch(fHomeStrength, fAwayStrength);
+      if (sim.homeScore > sim.awayScore) fHomeWins++;
+      else if (sim.homeScore < sim.awayScore) fAwayWins++;
+      else fDraws++;
+    }
+    const home = Math.round((fHomeWins / 1000) * 100);
+    const away = Math.round((fAwayWins / 1000) * 100);
+    const draw = 100 - home - away;
+    return { home, away, draw };
+  }, [fHome, fAway]);
+
+  const fHomeProb = probs.home;
+  const fAwayProb = probs.away;
+  const fDrawProb = probs.draw;
+
+  // Calculate dynamic Group A standings
+  const groupStandingsSim = useMemo(() => {
+    if (!teams || !matches) return [];
+    
+    const groupATeams = teams
+      .filter(t => t.group_name === 'A')
+      .map(team => {
+        let PJ = 0, PG = 0, PE = 0, PP = 0, GF = 0, GC = 0;
+        matches.forEach(match => {
+          const isFinished = match.status === 'finished';
+          const homeScore = match.home_score;
+          const awayScore = match.away_score;
+
+          if (isFinished && homeScore !== null && awayScore !== null) {
+            if (match.home_team_id === team.id || match.home_team?.id === team.id) {
+              PJ++;
+              GF += homeScore;
+              GC += awayScore;
+              if (homeScore > awayScore) PG++;
+              else if (homeScore === awayScore) PE++;
+              else PP++;
+            } else if (match.away_team_id === team.id || match.away_team?.id === team.id) {
+              PJ++;
+              GF += awayScore;
+              GC += homeScore;
+              if (awayScore > homeScore) PG++;
+              else if (awayScore === homeScore) PE++;
+              else PP++;
+            }
+          }
+        });
+        return { ...team, GD: GF - GC, Pts: PG * 3 + PE };
+      });
+
+    // Calculate simulation probabilities based on strengths
+    const sumStrength = groupATeams.reduce((acc, t) => acc + Math.max(10, 100 - (t.fifa_rank || 50) * 0.85), 0) || 1;
+    return groupATeams.map(t => {
+      const strength = Math.max(10, 100 - (t.fifa_rank || 50) * 0.85);
+      const winGroupProb = Math.round((strength / sumStrength) * 100);
+      return {
+        ...t,
+        prob: `${winGroupProb}%`
+      };
+    }).sort((a, b) => b.Pts - a.Pts || b.GD - a.GD || a.name.localeCompare(b.name));
+  }, [teams, matches]);
+
+  // Dynamic tactical insights
+  const dynamicInsights = useMemo(() => {
+    if (fHome && fAway) {
+      return [
+        t(`${fHome.name} llega con un ranking FIFA de #${fHome.fifa_rank} contra #${fAway.fifa_rank} de ${fAway.name}.`, `${fHome.name} enters with a FIFA ranking of #${fHome.fifa_rank} against #${fAway.fifa_rank} for ${fAway.name}.`),
+        t(`La probabilidad calculada favorece a ${fHome.name} con un ${fHomeProb}% frente al ${fAwayProb}% de ${fAway.name}.`, `Calculated probability favors ${fHome.name} with ${fHomeProb}% against ${fAwayProb}% for ${fAway.name}.`),
+        t(`El historial H2H proyectado y la aclimatación favorecerán un planteamiento de alta intensidad.`, `Projected H2H history and acclimatization will favor a high-intensity approach.`)
+      ];
+    }
+    return [
+      t('Todos los partidos están listos para simulación.', 'All fixtures are ready for simulation.'),
+      t('Ejecuta el simulador Monte Carlo para actualizar proyecciones de campeonato.', 'Run the Monte Carlo simulator to update championship projections.')
+    ];
+  }, [fHome, fAway, fHomeProb, fAwayProb, t]);
+
+  // Define displayInsights using tournament_insights from Supabase if available
+  const displayInsights = dbInsights && dbInsights.length > 0
+    ? dbInsights.map(item => `${item.title}: ${item.description}`)
+    : dynamicInsights;
+
+  // Prepare top scorers and assist leaders
+  const topScorers = useMemo(() => {
+    return [...players]
+      .filter(p => p.stats && p.stats.goals > 0)
+      .sort((a, b) => (b.stats?.goals || 0) - (a.stats?.goals || 0))
+      .slice(0, 5);
+  }, [players]);
+
+  const topAssists = useMemo(() => {
+    return [...players]
+      .filter(p => p.stats && p.stats.assists > 0)
+      .sort((a, b) => (b.stats?.assists || 0) - (a.stats?.assists || 0))
+      .slice(0, 5);
+  }, [players]);
 
   if (isLoading) {
     return (
@@ -52,103 +171,6 @@ export function DashboardView() {
     );
   }
 
-  // Find featured match for the probability center
-  const featureMatch = matches.find(m => m.status === 'scheduled') || matches[0];
-  const fHome = featureMatch?.home_team;
-  const fAway = featureMatch?.away_team;
-
-  // Real Poisson probabilities for featureMatch
-  let fHomeProb = 33;
-  let fAwayProb = 33;
-  let fDrawProb = 34;
-
-  if (fHome && fAway) {
-    const fHomeRank = fHome.fifa_rank || 50;
-    const fAwayRank = fAway.fifa_rank || 50;
-    const fHomeStrength = Math.max(10, 100 - fHomeRank * 0.85);
-    const fAwayStrength = Math.max(10, 100 - fAwayRank * 0.85);
-
-    let fHomeWins = 0;
-    let fAwayWins = 0;
-    let fDraws = 0;
-    for (let i = 0; i < 1000; i++) {
-      const sim = simulateMatch(fHomeStrength, fAwayStrength);
-      if (sim.homeScore > sim.awayScore) fHomeWins++;
-      else if (sim.homeScore < sim.awayScore) fAwayWins++;
-      else fDraws++;
-    }
-    fHomeProb = Math.round((fHomeWins / 1000) * 100);
-    fAwayProb = Math.round((fAwayWins / 1000) * 100);
-    fDrawProb = 100 - fHomeProb - fAwayProb;
-  }
-
-  // Calculate dynamic Group A standings
-  const groupATeams = teams
-    .filter(t => t.group_name === 'A')
-    .map(team => {
-      let PJ = 0, PG = 0, PE = 0, PP = 0, GF = 0, GC = 0;
-      matches.forEach(match => {
-        const isFinished = match.status === 'finished';
-        const homeScore = match.home_score;
-        const awayScore = match.away_score;
-
-        if (isFinished && homeScore !== null && awayScore !== null) {
-          if (match.home_team_id === team.id || match.home_team?.id === team.id) {
-            PJ++;
-            GF += homeScore;
-            GC += awayScore;
-            if (homeScore > awayScore) PG++;
-            else if (homeScore === awayScore) PE++;
-            else PP++;
-          } else if (match.away_team_id === team.id || match.away_team?.id === team.id) {
-            PJ++;
-            GF += awayScore;
-            GC += homeScore;
-            if (awayScore > homeScore) PG++;
-            else if (awayScore === homeScore) PE++;
-            else PP++;
-          }
-        }
-      });
-      return { ...team, GD: GF - GC, Pts: PG * 3 + PE };
-    });
-
-  // Calculate simulation probabilities based on strengths
-  const sumStrength = groupATeams.reduce((acc, t) => acc + Math.max(10, 100 - (t.fifa_rank || 50) * 0.85), 0) || 1;
-  const groupStandingsSim = groupATeams.map(t => {
-    const strength = Math.max(10, 100 - (t.fifa_rank || 50) * 0.85);
-    const winGroupProb = Math.round((strength / sumStrength) * 100);
-    return {
-      ...t,
-      prob: `${winGroupProb}%`
-    };
-  }).sort((a, b) => b.Pts - a.Pts || b.GD - a.GD || a.name.localeCompare(b.name));
-
-  // Dynamic tactical insights
-  const dynamicInsights = fHome && fAway ? [
-    t(`${fHome.name} llega con un ranking FIFA de #${fHome.fifa_rank} contra #${fAway.fifa_rank} de ${fAway.name}.`, `${fHome.name} enters with a FIFA ranking of #${fHome.fifa_rank} against #${fAway.fifa_rank} for ${fAway.name}.`),
-    t(`La probabilidad calculada favorece a ${fHome.name} con un ${fHomeProb}% frente al ${fAwayProb}% de ${fAway.name}.`, `Calculated probability favors ${fHome.name} with ${fHomeProb}% against ${fAwayProb}% for ${fAway.name}.`),
-    t(`El historial H2H proyectado y la aclimatación favorecerán un planteamiento de alta intensidad.`, `Projected H2H history and acclimatization will favor a high-intensity approach.`)
-  ] : [
-    t('Todos los partidos están listos para simulación.', 'All fixtures are ready for simulation.'),
-    t('Ejecuta el simulador Monte Carlo para actualizar proyecciones de campeonato.', 'Run the Monte Carlo simulator to update championship projections.')
-  ];
-
-  // Define displayInsights using tournament_insights from Supabase if available
-  const displayInsights = dbInsights && dbInsights.length > 0
-    ? dbInsights.map(item => `${item.title}: ${item.description}`)
-    : dynamicInsights;
-
-  // Prepare top scorers and assist leaders
-  const topScorers = [...players]
-    .filter(p => p.stats && p.stats.goals > 0)
-    .sort((a, b) => (b.stats?.goals || 0) - (a.stats?.goals || 0))
-    .slice(0, 5);
-
-  const topAssists = [...players]
-    .filter(p => p.stats && p.stats.assists > 0)
-    .sort((a, b) => (b.stats?.assists || 0) - (a.stats?.assists || 0))
-    .slice(0, 5);
 
   return (
     <div className="flex flex-col h-full gap-4 animate-in fade-in duration-500">

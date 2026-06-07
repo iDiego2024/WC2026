@@ -22,7 +22,9 @@ const getNavItems = (t: (es: string, en: string) => string) => [
   { to: '/community', icon: Users, label: t('Comunidad', 'Community') },
   { to: '/tv', icon: Tv, label: t('Modo TV', 'TV Mode') },
   { to: '/admin', icon: Activity, label: t('Data Ops', 'Data Ops') },
+  { to: '/ops', icon: Server, label: t('Ops Center', 'Ops Center') },
 ];
+
 
 
 export function Navigation() {
