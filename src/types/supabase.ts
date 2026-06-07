@@ -134,6 +134,18 @@ export interface Database {
           score: number
           created_at: string
           updated_at: string
+          favorite_team: string | null
+          favorite_country: string | null
+          avatar_url: string | null
+          bio: string | null
+          predictions_count: number
+          exact_hits: number
+          streak: number
+          achievements_count: number
+          rank_global: number | null
+          rank_weekly: number | null
+          rank_historic: number | null
+          rank_previous: number | null
         }
         Insert: {
           id: string
@@ -143,6 +155,18 @@ export interface Database {
           score?: number
           created_at?: string
           updated_at?: string
+          favorite_team?: string | null
+          favorite_country?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          predictions_count?: number
+          exact_hits?: number
+          streak?: number
+          achievements_count?: number
+          rank_global?: number | null
+          rank_weekly?: number | null
+          rank_historic?: number | null
+          rank_previous?: number | null
         }
         Update: {
           id?: string
@@ -152,6 +176,18 @@ export interface Database {
           score?: number
           created_at?: string
           updated_at?: string
+          favorite_team?: string | null
+          favorite_country?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          predictions_count?: number
+          exact_hits?: number
+          streak?: number
+          achievements_count?: number
+          rank_global?: number | null
+          rank_weekly?: number | null
+          rank_historic?: number | null
+          rank_previous?: number | null
         }
       }
       match_predictions: {
@@ -224,6 +260,52 @@ export interface Database {
           league_id?: string
           user_id?: string
           joined_at?: string
+        }
+      }
+      achievements: {
+        Row: {
+          id: string
+          code: string
+          title: string
+          description: string
+          badge_icon: string
+          points_reward: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          code: string
+          title: string
+          description: string
+          badge_icon: string
+          points_reward?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          code?: string
+          title?: string
+          description?: string
+          badge_icon?: string
+          points_reward?: number
+          created_at?: string
+        }
+      }
+      user_achievements: {
+        Row: {
+          user_id: string
+          achievement_id: string
+          unlocked_at: string
+        }
+        Insert: {
+          user_id: string
+          achievement_id: string
+          unlocked_at?: string
+        }
+        Update: {
+          user_id?: string
+          achievement_id?: string
+          unlocked_at?: string
         }
       }
     }

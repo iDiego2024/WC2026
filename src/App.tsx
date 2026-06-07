@@ -17,6 +17,8 @@ const TvModeView = lazy(() => import('./views/TvModeView').then(m => ({ default:
 const AssistantView = lazy(() => import('./views/AssistantView').then(m => ({ default: m.AssistantView })));
 const AdminStatusView = lazy(() => import('./views/AdminStatusView').then(m => ({ default: m.AdminStatusView })));
 const OpsView = lazy(() => import('./views/OpsView').then(m => ({ default: m.OpsView })));
+const ProfileView = lazy(() => import('./views/ProfileView').then(m => ({ default: m.ProfileView })));
+const PredictionHistoryView = lazy(() => import('./views/PredictionHistoryView').then(m => ({ default: m.PredictionHistoryView })));
 
 const LoadingSpinner = () => (
   <div className="flex flex-col items-center justify-center h-full min-h-[400px] gap-4 text-slate-400">
@@ -46,6 +48,8 @@ export default function App() {
                <Route path="/tv" element={<TvModeView />} />
                <Route path="/admin" element={<AdminStatusView />} />
                <Route path="/ops" element={<OpsView />} />
+               <Route path="/profile" element={<ProfileView />} />
+               <Route path="/history" element={<PredictionHistoryView />} />
                <Route path="/match/:id" element={<MatchDetailView />} />
             </Routes>
           </Suspense>

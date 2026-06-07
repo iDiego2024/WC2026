@@ -13,7 +13,9 @@ export const es = {
     tv: "Modo TV",
     dataOps: "Data Ops",
     opsCenter: "Centro de Ops",
-    language: "Idioma"
+    language: "Idioma",
+    profile: "Perfil",
+    history: "Historial"
   },
   common: {
     loading: "Cargando...",
@@ -348,6 +350,45 @@ export const es = {
     createLeague: "Crear Liga",
     joinCode: "Unirse por Código",
     playersName: "Jugadores"
+  },
+  profile: {
+    title: "Mi Perfil",
+    editProfile: "Editar Perfil",
+    displayName: "Nombre para Mostrar",
+    bio: "Biografía",
+    favoriteTeam: "Equipo Favorito",
+    favoriteCountry: "País Favorito",
+    points: "Puntos Totales",
+    globalRank: "Ranking Global",
+    weeklyRank: "Ranking Semanal",
+    historicRank: "Ranking Histórico",
+    predictionsCount: "Predicciones Realizadas",
+    exactHits: "Aciertos Exactos",
+    streak: "Racha Actual",
+    achievements: "Logros Desbloqueados",
+    saveSuccess: "Perfil actualizado con éxito",
+    saveError: "Error al actualizar el perfil",
+    placeholderBio: "Cuéntanos sobre ti...",
+    noAchievements: "Aún no has desbloqueado ningún logro. ¡Comienza a predecir partidos para ganar medallas!",
+    rankVariation: "Variación"
+  },
+  history: {
+    title: "Historial de Predicciones",
+    accuracy: "Porcentaje de Acierto",
+    averagePoints: "Promedio de Puntos",
+    totalPredictions: "Total Predicciones",
+    filterAll: "Todas",
+    filterPerfect: "Aciertos Exactos",
+    filterHits: "Aciertos",
+    filterMisses: "Fallidas",
+    filterPending: "Pendientes",
+    noPredictions: "No se encontraron predicciones con este filtro.",
+    predictionVsActual: "Pronóstico vs Resultado",
+    pointsEarned: "Puntos ganados",
+    perfectBadge: "Perfecto",
+    hitBadge: "Acertado",
+    missBadge: "Fallado",
+    pendingBadge: "Pendiente"
   }
 };
 

@@ -56,6 +56,23 @@ export const predictionsService = {
     return data;
   },
 
+  async getPredictionsWithMatches(userId: string) {
+    const { data, error } = await supabase
+      .from('match_predictions')
+      .select(`
+        *,
+        match:matches(
+          *,
+          home_team:teams!home_team_id(*),
+          away_team:teams!away_team_id(*),
+          stadium:stadiums(*)
+        )
+      `)
+      .eq('user_id', userId);
+    if (error) throw error;
+    return data;
+  },
+
   async savePrediction(userId: string, matchId: string, homeScore: number, awayScore: number) {
     const { data, error } = await supabase
       .from('match_predictions')
@@ -185,17 +202,54 @@ export const profilesService = {
     return data;
   },
 
-  async updateProfile(userId: string, displayName: string, photoUrl: string) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .upsert({
+  async updateProfile(
+    userId: string,
+    updates: Partial<Database['public']['Tables']['profiles']['Update']> | string,
+    photoUrl?: string
+  ) {
+    let payload: any;
+    if (typeof updates === 'string') {
+      payload = {
         id: userId,
-        display_name: displayName,
+        display_name: updates,
         photo_url: photoUrl,
         updated_at: new Date().toISOString()
-      })
+      };
+    } else {
+      payload = {
+        id: userId,
+        ...updates,
+        updated_at: new Date().toISOString()
+      };
+    }
+    const { data, error } = await supabase
+      .from('profiles')
+      .upsert(payload)
       .select()
       .single();
+    if (error) throw error;
+    return data;
+  }
+};
+
+export const achievementsService = {
+  async getAllAchievements() {
+    const { data, error } = await supabase
+      .from('achievements')
+      .select('*')
+      .order('points_reward', { ascending: true });
+    if (error) throw error;
+    return data;
+  },
+
+  async getUserAchievements(userId: string) {
+    const { data, error } = await supabase
+      .from('user_achievements')
+      .select(`
+        *,
+        achievement:achievements(*)
+      `)
+      .eq('user_id', userId);
     if (error) throw error;
     return data;
   }

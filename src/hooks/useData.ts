@@ -5,7 +5,8 @@ import {
   matchesService, 
   predictionsService, 
   leaguesService, 
-  profilesService 
+  profilesService,
+  achievementsService
 } from '../services/api';
 import { premiumServices } from '../services/premiumServices';
 
@@ -441,4 +442,84 @@ export function useTournamentInsights() {
   }, []);
 
   return { insights, loading, error };
+}
+
+export function useUserAchievements(userId: string | undefined) {
+  const [userAchievements, setUserAchievements] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchUserAchievements = useCallback(() => {
+    if (!userId) {
+      setUserAchievements([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    achievementsService.getUserAchievements(userId)
+      .then(data => {
+        setUserAchievements(data || []);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err);
+        setLoading(false);
+      });
+  }, [userId]);
+
+  useEffect(() => {
+    fetchUserAchievements();
+  }, [fetchUserAchievements]);
+
+  return { userAchievements, loading, error, refresh: fetchUserAchievements };
+}
+
+export function useAchievements() {
+  const [achievements, setAchievements] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    achievementsService.getAllAchievements()
+      .then(data => {
+        setAchievements(data || []);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err);
+        setLoading(false);
+      });
+  }, []);
+
+  return { achievements, loading, error };
+}
+
+export function usePredictionHistory(userId: string | undefined) {
+  const [predictions, setPredictions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchHistory = useCallback(() => {
+    if (!userId) {
+      setPredictions([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    predictionsService.getPredictionsWithMatches(userId)
+      .then(data => {
+        setPredictions(data || []);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err);
+        setLoading(false);
+      });
+  }, [userId]);
+
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
+
+  return { predictions, loading, error, refresh: fetchHistory };
 }

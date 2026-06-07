@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Calendar, Trophy, BarChart3, Users, MapPin, BrainCircuit, Shield, Network, Layers, Tv, Bot, Globe, Activity, Server } from 'lucide-react';
+import { Home, Calendar, Trophy, BarChart3, Users, MapPin, BrainCircuit, Shield, Network, Layers, Tv, Bot, Globe, Activity, Server, User, History } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useLanguage } from '../context/LanguageContext';
@@ -14,6 +14,8 @@ const getNavItems = (t: (key: string) => string) => [
   { to: '/matches', icon: Calendar, label: t('nav.matches') },
   { to: '/groups', icon: BarChart3, label: t('nav.groups') },
   { to: '/predictor', icon: Trophy, label: t('nav.predictor') },
+  { to: '/history', icon: History, label: t('nav.history') },
+  { to: '/profile', icon: User, label: t('nav.profile') },
   { to: '/fantasy', icon: Shield, label: t('nav.fantasy') },
   { to: '/simulator', icon: BrainCircuit, label: t('nav.simulator') },
   { to: '/universe', icon: Network, label: t('nav.universe') },

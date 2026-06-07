@@ -15,7 +15,9 @@ export const en: Translations = {
     tv: "TV Mode",
     dataOps: "Data Ops",
     opsCenter: "Ops Center",
-    language: "Language"
+    language: "Language",
+    profile: "Profile",
+    history: "History"
   },
   common: {
     loading: "Loading...",
@@ -350,5 +352,44 @@ export const en: Translations = {
     createLeague: "Create League",
     joinCode: "Join via Code",
     playersName: "Players"
+  },
+  profile: {
+    title: "My Profile",
+    editProfile: "Edit Profile",
+    displayName: "Display Name",
+    bio: "Bio",
+    favoriteTeam: "Favorite Team",
+    favoriteCountry: "Favorite Country",
+    points: "Total Points",
+    globalRank: "Global Rank",
+    weeklyRank: "Weekly Rank",
+    historicRank: "Historic Rank",
+    predictionsCount: "Predictions Made",
+    exactHits: "Exact Hits",
+    streak: "Current Streak",
+    achievements: "Unlocked Achievements",
+    saveSuccess: "Profile updated successfully",
+    saveError: "Error updating profile",
+    placeholderBio: "Tell us about yourself...",
+    noAchievements: "You haven't unlocked any achievements yet. Start predicting matches to earn badges!",
+    rankVariation: "Variation"
+  },
+  history: {
+    title: "Prediction History",
+    accuracy: "Accuracy Rate",
+    averagePoints: "Average Points",
+    totalPredictions: "Total Predictions",
+    filterAll: "All",
+    filterPerfect: "Exact Hits",
+    filterHits: "Hits",
+    filterMisses: "Missed",
+    filterPending: "Pending",
+    noPredictions: "No predictions found with this filter.",
+    predictionVsActual: "Prediction vs Result",
+    pointsEarned: "Points earned",
+    perfectBadge: "Perfect",
+    hitBadge: "Hit",
+    missBadge: "Missed",
+    pendingBadge: "Pending"
   }
 };
