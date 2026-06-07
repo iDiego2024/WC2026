@@ -15,6 +15,16 @@ export function MatchDetailView() {
   const { match, loading: matchLoading, error: matchError } = useMatch(id || '');
   const { loading: teamsLoading, error: teamsError } = useTeams();
 
+  const home = match?.home_team;
+  const away = match?.away_team;
+  const stadium = match?.stadium;
+
+  // Load real data from Supabase (called unconditionally)
+  const { events: dbEvents } = useMatchEvents(id || '');
+  const { lineups: dbLineups } = useMatchLineups(id || '');
+  const { statistics: dbStats } = useMatchStatistics(id || '');
+  const { h2h: dbH2H } = useH2HHistory(home?.code || '', away?.code || '');
+
   const isLoading = matchLoading || teamsLoading;
   const error = matchError || teamsError;
 
@@ -48,8 +58,6 @@ export function MatchDetailView() {
       </div>
     );
   }
-
-  const { home_team: home, away_team: away, stadium } = match;
 
   if (!home || !away) {
      return (
@@ -93,12 +101,6 @@ export function MatchDetailView() {
     match.away_score,
     match.status
   );
-
-  // Load real data from Supabase
-  const { events: dbEvents } = useMatchEvents(match.id);
-  const { lineups: dbLineups } = useMatchLineups(match.id);
-  const { statistics: dbStats } = useMatchStatistics(match.id);
-  const { h2h: dbH2H } = useH2HHistory(home.code, away.code);
 
   // Home/Away score variables for tactical description
   const hScore = match.home_score ?? 0;
