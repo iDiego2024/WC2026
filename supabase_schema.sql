@@ -126,10 +126,8 @@ CREATE POLICY "Anyone can view leagues they are in" ON private_leagues
 CREATE POLICY "Users can insert leagues" ON private_leagues FOR INSERT WITH CHECK (auth.uid() = owner_id);
 
 ALTER TABLE league_members ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can view members of their leagues" ON league_members 
-    FOR SELECT USING (
-        auth.uid() IN (SELECT user_id FROM league_members lm WHERE lm.league_id = league_members.league_id)
-    );
+CREATE POLICY "Users can view league memberships" ON league_members 
+    FOR SELECT USING (auth.uid() IS NOT NULL);
 CREATE POLICY "Users can join a league" ON league_members FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- 6. Indexes para optimización
