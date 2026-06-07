@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth, useUserAchievements, useAchievements, useTeams } from '../hooks/useData';
 import { useLanguage } from '../context/LanguageContext';
 import { profilesService } from '../services/api';
+import { AuthCard } from '../components/AuthCard';
 import { 
   Trophy, Award, Shield, Crown, Star, Flame, Zap, TrendingUp, 
   Lock, Edit3, Save, Check, AlertCircle, User, MessageSquare, Flag, MapPin
@@ -43,15 +44,6 @@ export function ProfileView() {
     }
   }, [user]);
 
-  if (!user) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[400px] text-slate-400">
-        <User className="w-16 h-16 mb-4 opacity-20" />
-        <p className="text-sm">{t('common.unauthorized')}</p>
-      </div>
-    );
-  }
-
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
@@ -78,14 +70,14 @@ export function ProfileView() {
   };
 
   // Calculations
-  const predictionsCount = user.predictions_count || 0;
-  const exactHits = user.exact_hits || 0;
+  const predictionsCount = user?.predictions_count || 0;
+  const exactHits = user?.exact_hits || 0;
   const hitAccuracy = predictionsCount > 0 ? Math.round((exactHits / predictionsCount) * 100) : 0;
-  const streak = user.streak || 0;
+  const streak = user?.streak || 0;
 
   // Rank Variation
-  const rankGlobal = user.rank_global || null;
-  const rankPrevious = user.rank_previous || null;
+  const rankGlobal = user?.rank_global || null;
+  const rankPrevious = user?.rank_previous || null;
   let rankDiff = 0;
   if (rankGlobal !== null && rankPrevious !== null) {
     rankDiff = rankPrevious - rankGlobal; // positive means rank went up (e.g. 10th to 8th)
@@ -104,88 +96,108 @@ export function ProfileView() {
         <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary/15 blur-3xl" />
         <div className="absolute -left-10 -bottom-10 h-40 w-40 rounded-full bg-violet-600/10 blur-3xl" />
 
-        <div className="relative flex flex-col md:flex-row gap-6 items-center md:items-start justify-between">
-          <div className="flex flex-col md:flex-row gap-6 items-center text-center md:text-left">
-            {/* Avatar */}
-            <div className="relative group">
-              <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl overflow-hidden border-2 border-primary/40 bg-slate-950 flex items-center justify-center p-1 shadow-xl">
-                <img 
-                  src={user.photo_url || `https://api.dicebear.com/7.x/adventurer/svg?seed=${user.id}`} 
-                  alt={user.display_name} 
-                  className="w-full h-full object-cover rounded-xl"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${user.id}`;
-                  }}
-                />
+        {!user ? (
+          <div className="flex flex-col lg:flex-row gap-8 items-center justify-between">
+            <div className="space-y-4 text-center lg:text-left flex-1">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black border border-amber-500/20 bg-amber-500/5 text-amber-400 uppercase tracking-wider">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                Modo Vista Pública (Invitado)
               </div>
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg bg-primary flex items-center justify-center border border-slate-950 text-[10px] font-bold text-slate-950 shadow-md">
-                🏆
+              <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+                Tu Perfil del Torneo
+              </h1>
+              <p className="text-sm text-slate-400 max-w-md">
+                Estás navegando como invitado. Inicia sesión con Google para personalizar tu avatar, elegir tu equipo favorito y comenzar a registrar tus pronósticos y logros.
+              </p>
+            </div>
+            <div className="w-full lg:max-w-md shrink-0">
+              <AuthCard />
+            </div>
+          </div>
+        ) : (
+          <div className="relative flex flex-col md:flex-row gap-6 items-center md:items-start justify-between">
+            <div className="flex flex-col md:flex-row gap-6 items-center text-center md:text-left">
+              {/* Avatar */}
+              <div className="relative group">
+                <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl overflow-hidden border-2 border-primary/40 bg-slate-950 flex items-center justify-center p-1 shadow-xl">
+                  <img 
+                    src={user.photo_url || `https://api.dicebear.com/7.x/adventurer/svg?seed=${user.id}`} 
+                    alt={user.display_name} 
+                    className="w-full h-full object-cover rounded-xl"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${user.id}`;
+                    }}
+                  />
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg bg-primary flex items-center justify-center border border-slate-950 text-[10px] font-bold text-slate-950 shadow-md">
+                  🏆
+                </div>
+              </div>
+
+              {/* Profile Info */}
+              <div className="space-y-3">
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+                    {user.display_name || 'Player'}
+                  </h1>
+                  <p className="text-xs text-slate-400 mt-1 flex items-center justify-center md:justify-start gap-1">
+                    <User className="w-3.5 h-3.5 text-primary" />
+                    ID: {user.id.substring(0, 8)}...
+                  </p>
+                </div>
+
+                {user.bio ? (
+                  <p className="text-sm text-slate-300 max-w-md italic font-light leading-relaxed">
+                    "{user.bio}"
+                  </p>
+                ) : (
+                  <p className="text-xs text-slate-500 italic">
+                    {t('profile.placeholderBio')}
+                  </p>
+                )}
+
+                {/* Badges / Fav info */}
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
+                  {user.favorite_team && (
+                    <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border border-emerald-500/20 bg-emerald-500/5 text-emerald-400">
+                      <Flag className="w-3.5 h-3.5" />
+                      {user.favorite_team}
+                    </span>
+                  )}
+                  {user.favorite_country && (
+                    <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border border-sky-500/20 bg-sky-500/5 text-sky-400">
+                      <MapPin className="w-3.5 h-3.5" />
+                      {user.favorite_country}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Profile Info */}
-            <div className="space-y-3">
-              <div>
-                <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
-                  {user.display_name || 'Player'}
-                </h1>
-                <p className="text-xs text-slate-400 mt-1 flex items-center justify-center md:justify-start gap-1">
-                  <User className="w-3.5 h-3.5 text-primary" />
-                  ID: {user.id.substring(0, 8)}...
-                </p>
-              </div>
-
-              {user.bio ? (
-                <p className="text-sm text-slate-300 max-w-md italic font-light leading-relaxed">
-                  "{user.bio}"
-                </p>
+            {/* Edit / Actions Button */}
+            <div className="flex flex-col gap-2 items-stretch md:items-end w-full md:w-auto">
+              {!isEditing ? (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-200 text-sm font-semibold hover:bg-slate-800 transition-colors shadow-md cursor-pointer"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  {t('profile.editProfile')}
+                </button>
               ) : (
-                <p className="text-xs text-slate-500 italic">
-                  {t('profile.placeholderBio')}
-                </p>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-slate-700 bg-slate-900 text-slate-400 text-sm font-semibold hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  {t('common.cancel')}
+                </button>
               )}
-
-              {/* Badges / Fav info */}
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
-                {user.favorite_team && (
-                  <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border border-emerald-500/20 bg-emerald-500/5 text-emerald-400">
-                    <Flag className="w-3.5 h-3.5" />
-                    {user.favorite_team}
-                  </span>
-                )}
-                {user.favorite_country && (
-                  <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border border-sky-500/20 bg-sky-500/5 text-sky-400">
-                    <MapPin className="w-3.5 h-3.5" />
-                    {user.favorite_country}
-                  </span>
-                )}
-              </div>
             </div>
           </div>
+        )}
 
-          {/* Edit / Actions Button */}
-          <div className="flex flex-col gap-2 items-stretch md:items-end w-full md:w-auto">
-            {!isEditing ? (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-200 text-sm font-semibold hover:bg-slate-800 transition-colors shadow-md cursor-pointer"
-              >
-                <Edit3 className="w-4 h-4" />
-                {t('profile.editProfile')}
-              </button>
-            ) : (
-              <button
-                onClick={() => setIsEditing(false)}
-                className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-slate-700 bg-slate-900 text-slate-400 text-sm font-semibold hover:bg-slate-800 transition-colors cursor-pointer"
-              >
-                {t('common.cancel')}
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Editing Drawer / Form */}
-        {isEditing && (
+      {/* Editing Drawer / Form */}
+      {isEditing && user && (
           <form onSubmit={handleSave} className="mt-8 pt-6 border-t border-slate-800/80 space-y-4 max-w-xl">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
@@ -272,7 +284,7 @@ export function ProfileView() {
         <div className="border border-slate-800 bg-slate-900/50 backdrop-blur-sm p-4 rounded-2xl flex flex-col justify-between h-28 relative">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('profile.points')}</span>
           <div className="flex items-baseline justify-between mt-2">
-            <span className="text-3xl font-black text-white">{user.score}</span>
+            <span className="text-3xl font-black text-white">{user?.score || 0}</span>
             <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
               <Trophy className="w-4 h-4 text-primary" />
             </div>
@@ -302,11 +314,11 @@ export function ProfileView() {
           <div className="flex flex-col gap-1 mt-2">
             <div className="flex justify-between text-xs font-semibold">
               <span className="text-slate-400">{t('profile.weeklyRank')}:</span>
-              <span className="text-white">{user.rank_weekly ? `#${user.rank_weekly}` : '—'}</span>
+              <span className="text-white">{user?.rank_weekly ? `#${user.rank_weekly}` : '—'}</span>
             </div>
             <div className="flex justify-between text-xs font-semibold">
               <span className="text-slate-400">{t('profile.historicRank')}:</span>
-              <span className="text-white">{user.rank_historic ? `#${user.rank_historic}` : '—'}</span>
+              <span className="text-white">{user?.rank_historic ? `#${user.rank_historic}` : '—'}</span>
             </div>
           </div>
         </div>

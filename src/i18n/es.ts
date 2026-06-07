@@ -389,6 +389,22 @@ export const es = {
     hitBadge: "Acertado",
     missBadge: "Fallado",
     pendingBadge: "Pendiente"
+  },
+  auth: {
+    benefit1: "Guarda tus pronósticos en la nube y evita perder tus puntos.",
+    benefit2: "Compite en tiempo real en la clasificación global y de amigos.",
+    benefit3: "Desbloquea 11 logros únicos y gana medallas especiales.",
+    title: "Únete a la Copa del Mundo 2026",
+    subtitle: "Crea tu perfil ahora para acceder a estadísticas avanzadas, competir y desbloquear logros.",
+    titleCompact: "¡Únete a la Competencia!",
+    subtitleCompact: "Inicia sesión para interactuar y guardar tus datos.",
+    continueWithGoogle: "Continuar con Google",
+    guestStatus: "Invitado",
+    guestWarning: "Conéctate para guardar tus puntos",
+    connectedAs: "Conectado como",
+    connectedStatus: "Conectado",
+    logout: "Cerrar Sesión",
+    signInCTA: "Iniciar Sesión"
   }
 };
 

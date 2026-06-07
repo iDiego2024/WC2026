@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth, usePredictionHistory } from '../hooks/useData';
 import { useLanguage } from '../context/LanguageContext';
+import { AuthCard } from '../components/AuthCard';
 import { format } from 'date-fns';
 import { es as esLocale } from 'date-fns/locale';
 import { 
@@ -16,9 +17,25 @@ export function PredictionHistoryView() {
 
   if (!user) {
     return (
-      <div className="flex flex-col items-center justify-center h-[400px] text-slate-400">
-        <AlertCircle className="w-12 h-12 mb-4 opacity-20" />
-        <p className="text-sm">{t('common.unauthorized')}</p>
+      <div className="space-y-8 max-w-6xl mx-auto px-4 py-6 animate-in fade-in duration-500">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
+            <BarChart2 className="w-7 h-7 text-primary" />
+            {t('history.title')}
+          </h1>
+          <p className="text-xs text-slate-400 mt-1">
+            Revisa el rendimiento de tus predicciones, puntos obtenidos y nivel de precisión.
+          </p>
+        </div>
+
+        <div className="border border-slate-800 bg-slate-900/10 rounded-3xl p-8 flex flex-col items-center justify-center min-h-[350px]">
+          <div className="max-w-md w-full">
+            <AuthCard 
+              title="Tu Historial de Pronósticos"
+              subtitle="Conéctate para ver el historial detallado de tus aciertos, fallos, promedio de puntos y porcentaje de efectividad."
+            />
+          </div>
+        </div>
       </div>
     );
   }

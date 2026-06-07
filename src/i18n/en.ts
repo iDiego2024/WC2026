@@ -391,5 +391,21 @@ export const en: Translations = {
     hitBadge: "Hit",
     missBadge: "Missed",
     pendingBadge: "Pending"
+  },
+  auth: {
+    benefit1: "Save your predictions in the cloud and prevent losing points.",
+    benefit2: "Compete in real time in global and friends leaderboards.",
+    benefit3: "Unlock 11 unique achievements and earn special medals.",
+    title: "Join the World Cup 2026",
+    subtitle: "Create your profile now to access advanced stats, compete and unlock achievements.",
+    titleCompact: "Join the Competition!",
+    subtitleCompact: "Log in to interact and save your data.",
+    continueWithGoogle: "Continue with Google",
+    guestStatus: "Guest",
+    guestWarning: "Connect to save your points",
+    connectedAs: "Connected as",
+    connectedStatus: "Connected",
+    logout: "Log Out",
+    signInCTA: "Sign In"
   }
 };

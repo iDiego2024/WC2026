@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useLanguage } from "../context/LanguageContext";
 import { useAuth, useMatches, usePredictions } from "../hooks/useData";
 import { Trophy, LogIn, LogOut, Loader2 } from 'lucide-react';
+import { AuthCard } from '../components/AuthCard';
 
 export function PredictorView() {
   const { t } = useLanguage();
@@ -69,16 +70,13 @@ export function PredictorView() {
 
   if (!user) {
     return (
-      <div className="h-[80vh] flex flex-col items-center justify-center space-y-6 text-center">
-        <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-          <Trophy className="w-12 h-12 text-primary" />
+      <div className="h-[80vh] flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          <AuthCard 
+            title="Pronósticos de la Copa del Mundo"
+            subtitle="Inicia sesión con tu cuenta de Google para registrar tus marcadores proyectados, ganar puntos por aciertos exactos y liderar la tabla global."
+          />
         </div>
-        <h2 className="text-3xl font-black">{t('predictor.signInTitle')}</h2>
-        <p className="text-muted-foreground max-w-md">{t('predictor.signInDesc')}</p>
-        <Button size="lg" onClick={signInWithGoogle} className="gap-2 font-bold uppercase tracking-wider text-xs">
-          <LogIn className="w-5 h-5" />
-          {t('predictor.signInButton')}
-        </Button>
       </div>
     );
   }

@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, MessageCircle, Share2, Trophy, Users, Star, ArrowUpRight, Flame, BrainCircuit, Crosshair, Plus, Sparkles, Loader2 } from 'lucide-react';
 import { useAuth, useLeagues, useRankings } from '../hooks/useData';
 import { useLanguage } from '../context/LanguageContext';
+import { AuthCard } from '../components/AuthCard';
 
 type SocialComment = {
   id: string;
@@ -290,9 +291,12 @@ export function CommunityView() {
             )}
 
             {!user ? (
-              <div className="text-center p-4">
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Requiere Iniciar Sesión</p>
-                <Button size="sm" onClick={signInWithGoogle} className="text-[9px] uppercase font-bold w-full h-8">{t('predictor.signInButton')}</Button>
+              <div className="p-1">
+                <AuthCard 
+                  title="Tus Ligas Privadas"
+                  subtitle="Inicia sesión con Google para crear tus propias ligas de amigos y competir."
+                  compact={true}
+                />
               </div>
             ) : leaguesLoading ? (
               <div className="flex justify-center py-4"><Loader2 className="w-4 h-4 animate-spin text-primary" /></div>
@@ -364,7 +368,15 @@ export function CommunityView() {
             <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar">
               
               {/* Write Post */}
-              {user && (
+              {!user ? (
+                <div className="pb-4 border-b border-border/50">
+                  <AuthCard 
+                    title="¿Quieres compartir tu opinión?"
+                    subtitle="Inicia sesión con Google para publicar tus propios análisis, predicciones y simulaciones en el muro global."
+                    compact={true}
+                  />
+                </div>
+              ) : (
                 <form onSubmit={handleCreatePost} className="flex gap-3 pb-4 border-b border-border/50">
                   <Avatar className="w-10 h-10 border border-border">
                     {user.photo_url && <AvatarImage src={user.photo_url} />}
@@ -472,7 +484,15 @@ export function CommunityView() {
                           <Button type="submit" size="sm" className="h-8 text-[9px] uppercase font-bold">Responder</Button>
                         </form>
                       ) : (
-                        <div className="text-[9px] font-bold text-slate-500 uppercase text-center py-1 bg-secondary/20 rounded">Inicia sesión para comentar</div>
+                        <div className="flex items-center justify-between gap-2 bg-secondary/15 border border-border/40 p-2 rounded-xl text-[10px]">
+                          <span className="text-slate-400 font-bold uppercase text-[9px]">Inicia sesión para comentar</span>
+                          <button
+                            onClick={signInWithGoogle}
+                            className="px-2.5 py-1 bg-primary text-slate-950 font-black rounded-lg text-[9px] uppercase hover:bg-primary-hover transition-colors cursor-pointer"
+                          >
+                            Conectar
+                          </button>
+                        </div>
                       )}
                     </div>
                   )}
