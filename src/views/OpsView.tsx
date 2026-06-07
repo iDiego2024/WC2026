@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   Activity, Database, ShieldCheck, Play, AlertCircle, Clock, CheckCircle, 
-  Settings, Server, RefreshCw, BarChart2, CheckSquare, Zap, Tool 
+  Settings, Server, RefreshCw, BarChart2, CheckSquare, Zap 
 } from "lucide-react";
 import { supabase } from '../lib/supabase';
 import { 

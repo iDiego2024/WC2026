@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Calendar, Trophy, BarChart3, Users, MapPin, BrainCircuit, Shield, Network, Layers, Tv, Bot, Globe, Activity } from 'lucide-react';
+import { Home, Calendar, Trophy, BarChart3, Users, MapPin, BrainCircuit, Shield, Network, Layers, Tv, Bot, Globe, Activity, Server } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useLanguage } from '../context/LanguageContext';
