@@ -44,19 +44,19 @@ const DEFAULT_POSTS: SocialPost[] = [
     userHandle: '@marcus99',
     avatar: 'M',
     isPro: true,
-    timeText: '2 hrs ago',
-    content: 'Just ran a 100k iteration Monte Carlo on Group F. The model is highly confident in an upset.',
+    timeText: 'Hace 2 horas',
+    content: 'Acabo de correr una simulación Monte Carlo de 100k iteraciones en el Grupo F. El modelo tiene alta confianza en una sorpresa.',
     likes: 24,
     hasLiked: false,
     comments: [
-      { id: 'c-1', userName: 'Sarah_Goal', avatar: 'S', content: 'Morocco has a strong squad this year, not a surprise!', timeText: '1 hr ago' }
+      { id: 'c-1', userName: 'Sarah_Goal', avatar: 'S', content: 'Marruecos tiene una plantilla muy fuerte este año, ¡no es una sorpresa!', timeText: 'Hace 1 hora' }
     ],
     simulation: {
       homeCode: 'MAR',
       homeFlag: 'ma',
       awayCode: 'BEL',
       awayFlag: 'be',
-      detail: 'Morocco to win Group F',
+      detail: 'Marruecos clasifica Grupo F',
       prob: '68.4% Prob'
     }
   },
@@ -65,8 +65,8 @@ const DEFAULT_POSTS: SocialPost[] = [
     userName: 'Diego Tracker',
     userHandle: '@diegotr',
     avatar: 'D',
-    timeText: '5 hrs ago',
-    content: 'Argentina looking extremely solid. The predictive model ranks their attack force at 94.',
+    timeText: 'Hace 5 horas',
+    content: 'Argentina se ve extremadamente sólida. El modelo de predicción califica su fuerza de ataque en 94.',
     likes: 42,
     hasLiked: true,
     comments: []
@@ -119,10 +119,10 @@ export function CommunityView() {
 
     const newPost: SocialPost = {
       id: `post-${Date.now()}`,
-      userName: user?.display_name || 'Anonymous User',
+      userName: user?.display_name || 'Usuario Anónimo',
       userHandle: `@${(user?.display_name || 'user').toLowerCase().replace(/\s+/g, '')}`,
       avatar: user?.photo_url || (user?.display_name?.charAt(0) || 'U'),
-      timeText: 'Just now',
+      timeText: 'Hace un momento',
       content: postText,
       likes: 0,
       hasLiked: false,
@@ -154,10 +154,10 @@ export function CommunityView() {
 
     const newComment: SocialComment = {
       id: `c-${Date.now()}`,
-      userName: user?.display_name || 'Anonymous User',
+      userName: user?.display_name || 'Usuario Anónimo',
       avatar: user?.photo_url || (user?.display_name?.charAt(0) || 'U'),
       content: commentText,
-      timeText: 'Just now'
+      timeText: 'Hace un momento'
     };
 
     const updated = posts.map(p => {
@@ -183,7 +183,7 @@ export function CommunityView() {
       setInviteCode('');
       setShowJoin(false);
     } catch (err: any) {
-      alert(err.message || 'Error joining league');
+      alert(err.message || 'Error al unirse a la liga');
     } finally {
       setIsSubmitting(false);
     }
@@ -198,7 +198,7 @@ export function CommunityView() {
       setNewLeagueName('');
       setShowCreate(false);
     } catch (err: any) {
-      alert(err.message || 'Error creating league');
+      alert(err.message || 'Error al crear liga');
     } finally {
       setIsSubmitting(false);
     }
@@ -209,9 +209,9 @@ export function CommunityView() {
       <header className="space-y-0.5 mb-2 border-b border-border/50 pb-4 shrink-0">
         <h1 className="text-2xl font-black tracking-tight text-white uppercase flex items-center gap-3">
           <Users className="w-6 h-6 text-primary" />
-          Community Hub
+          {t('community.title')}
         </h1>
-        <p className="text-xs text-slate-400 font-medium tracking-wide uppercase">Leagues, Friends & Social Feed</p>
+        <p className="text-xs text-slate-400 font-medium tracking-wide uppercase">{t('community.subtitle')}</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0">
@@ -223,7 +223,7 @@ export function CommunityView() {
           <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[10px] font-black uppercase text-white tracking-widest flex items-center gap-2">
-                <Trophy className="w-3 h-3 text-yellow-400" /> Private Leagues
+                <Trophy className="w-3 h-3 text-yellow-400" /> {t('predictor.signInTitle')}
               </h3>
               {user && (
                 <div className="flex gap-1.5">
@@ -233,7 +233,7 @@ export function CommunityView() {
                     onClick={() => { setShowJoin(!showJoin); setShowCreate(false); }} 
                     className="h-6 text-[9px] uppercase font-bold border-border bg-secondary hover:bg-white/10 px-2"
                   >
-                    Join
+                    Unirse
                   </Button>
                   <Button 
                     variant="default" 
@@ -241,7 +241,7 @@ export function CommunityView() {
                     onClick={() => { setShowCreate(!showCreate); setShowJoin(false); }} 
                     className="h-6 text-[9px] uppercase font-bold bg-primary hover:bg-primary/95 px-2"
                   >
-                    Create
+                    Crear
                   </Button>
                 </div>
               )}
@@ -250,19 +250,19 @@ export function CommunityView() {
             {/* Create League Inline Input */}
             {showCreate && (
               <form onSubmit={handleCreateLeague} className="mb-4 p-3 bg-secondary/30 rounded-lg border border-border space-y-2 animate-in slide-in-from-top-2 duration-300">
-                <div className="text-[9px] font-bold text-slate-400 uppercase">League Name</div>
+                <div className="text-[9px] font-bold text-slate-400 uppercase">Nombre de la Liga</div>
                 <Input 
                   type="text" 
                   value={newLeagueName}
                   onChange={(e) => setNewLeagueName(e.target.value)}
-                  placeholder="e.g. Dream Team League"
+                  placeholder="Ej. Liga Dream Team"
                   className="h-8 text-xs bg-background border-border/50"
                   disabled={isSubmitting}
                 />
                 <div className="flex gap-2 justify-end">
-                  <Button type="button" variant="ghost" onClick={() => setShowCreate(false)} className="h-6 text-[9px] uppercase font-bold">Cancel</Button>
+                  <Button type="button" variant="ghost" onClick={() => setShowCreate(false)} className="h-6 text-[9px] uppercase font-bold">{t('common.cancel')}</Button>
                   <Button type="submit" size="sm" className="h-6 text-[9px] uppercase font-bold" disabled={isSubmitting}>
-                    {isSubmitting ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Create'}
+                    {isSubmitting ? <Loader2 className="w-3 h-3 animate-spin" /> : t('ops.run')}
                   </Button>
                 </div>
               </form>
@@ -271,19 +271,19 @@ export function CommunityView() {
             {/* Join League Inline Input */}
             {showJoin && (
               <form onSubmit={handleJoinLeague} className="mb-4 p-3 bg-secondary/30 rounded-lg border border-border space-y-2 animate-in slide-in-from-top-2 duration-300">
-                <div className="text-[9px] font-bold text-slate-400 uppercase">Invite Code</div>
+                <div className="text-[9px] font-bold text-slate-400 uppercase">Código de Invitación</div>
                 <Input 
                   type="text" 
                   value={inviteCode}
                   onChange={(e) => setInviteCode(e.target.value)}
-                  placeholder="e.g. AB12CD"
+                  placeholder="Ej. AB12CD"
                   className="h-8 text-xs bg-background border-border/50 uppercase"
                   disabled={isSubmitting}
                 />
                 <div className="flex gap-2 justify-end">
-                  <Button type="button" variant="ghost" onClick={() => setShowJoin(false)} className="h-6 text-[9px] uppercase font-bold">Cancel</Button>
+                  <Button type="button" variant="ghost" onClick={() => setShowJoin(false)} className="h-6 text-[9px] uppercase font-bold">{t('common.cancel')}</Button>
                   <Button type="submit" size="sm" className="h-6 text-[9px] uppercase font-bold" disabled={isSubmitting}>
-                    {isSubmitting ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Join'}
+                    {isSubmitting ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Entrar'}
                   </Button>
                 </div>
               </form>
@@ -291,24 +291,24 @@ export function CommunityView() {
 
             {!user ? (
               <div className="text-center p-4">
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Login required</p>
-                <Button size="sm" onClick={signInWithGoogle} className="text-[9px] uppercase font-bold w-full h-8">Login</Button>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Requiere Iniciar Sesión</p>
+                <Button size="sm" onClick={signInWithGoogle} className="text-[9px] uppercase font-bold w-full h-8">{t('predictor.signInButton')}</Button>
               </div>
             ) : leaguesLoading ? (
               <div className="flex justify-center py-4"><Loader2 className="w-4 h-4 animate-spin text-primary" /></div>
             ) : leagues.length === 0 ? (
-              <div className="text-center py-6 text-slate-500 text-xs font-bold uppercase">No Leagues Joined</div>
+              <div className="text-center py-6 text-slate-500 text-xs font-bold uppercase">Sin Ligas Unidas</div>
             ) : (
               <div className="space-y-3">
                 {leagues.map((league) => (
                   <div key={league.id} className="p-3 bg-secondary/50 rounded-lg border border-white/5 cursor-pointer hover:border-primary/50 transition-colors">
                     <div className="flex justify-between items-start mb-1">
                       <span className="text-xs font-bold text-white truncate max-w-[120px]">{league.name}</span>
-                      <span className="text-[9px] font-bold text-slate-500">{league.members?.length || 0} members</span>
+                      <span className="text-[9px] font-bold text-slate-500">{league.members?.length || 0} miembros</span>
                     </div>
                     <div className="flex justify-between items-center text-[10px]">
-                      <span className="text-slate-400 font-mono">Code: <span className="font-bold text-white">{league.invite_code}</span></span>
-                      <span className="text-primary font-bold">Owner: {league.owner?.display_name || 'Admin'}</span>
+                      <span className="text-slate-400 font-mono">Código: <span className="font-bold text-white">{league.invite_code}</span></span>
+                      <span className="text-primary font-bold">Líder: {league.owner?.display_name || 'Admin'}</span>
                     </div>
                   </div>
                 ))}
@@ -316,11 +316,11 @@ export function CommunityView() {
             )}
           </div>
 
-          {/* Following - Static placeholders but clean */}
+          {/* Following */}
           <div className="bg-card rounded-xl border border-border p-4 flex-1">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[10px] font-black uppercase text-white tracking-widest flex items-center gap-2">
-                <Users className="w-3 h-3 text-blue-400" /> Following (24)
+                <Users className="w-3 h-3 text-blue-400" /> Siguiendo (24)
               </h3>
             </div>
             <div className="space-y-4">
@@ -347,7 +347,7 @@ export function CommunityView() {
                 </div>
               ))}
             </div>
-            <Button variant="ghost" className="w-full mt-4 h-8 text-[9px] uppercase font-bold text-slate-400 hover:text-white">Find Friends</Button>
+            <Button variant="ghost" className="w-full mt-4 h-8 text-[9px] uppercase font-bold text-slate-400 hover:text-white">Buscar Amigos</Button>
           </div>
         </div>
 
@@ -356,8 +356,8 @@ export function CommunityView() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-1 flex flex-col min-h-0 bg-card rounded-xl border border-border">
             <div className="p-3 border-b border-border/50 bg-secondary/30 shrink-0">
               <TabsList className="bg-transparent h-8 p-0 space-x-2">
-                <TabsTrigger value="feed" className="text-[10px] font-bold uppercase rounded-md data-[state=active]:bg-primary/20 data-[state=active]:text-primary h-full px-4 border border-transparent data-[state=active]:border-primary/30">Global Feed</TabsTrigger>
-                <TabsTrigger value="friends" className="text-[10px] font-bold uppercase rounded-md data-[state=active]:bg-primary/20 data-[state=active]:text-primary h-full px-4 border border-transparent data-[state=active]:border-primary/30">Friends & Leagues</TabsTrigger>
+                <TabsTrigger value="feed" className="text-[10px] font-bold uppercase rounded-md data-[state=active]:bg-primary/20 data-[state=active]:text-primary h-full px-4 border border-transparent data-[state=active]:border-primary/30">Muro Global</TabsTrigger>
+                <TabsTrigger value="friends" className="text-[10px] font-bold uppercase rounded-md data-[state=active]:bg-primary/20 data-[state=active]:text-primary h-full px-4 border border-transparent data-[state=active]:border-primary/30">Amigos y Ligas</TabsTrigger>
               </TabsList>
             </div>
 
@@ -375,13 +375,13 @@ export function CommunityView() {
                       type="text" 
                       value={postText}
                       onChange={(e) => setPostText(e.target.value)}
-                      placeholder="Share a prediction, simulation, or thought..." 
+                      placeholder={t('community.postPlaceholder')} 
                       className="w-full bg-secondary/50 border border-white/5 rounded-lg px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-primary/50 transition-colors" 
                     />
                     <div className="flex gap-2">
-                      <Button type="submit" size="sm" className="h-6 px-3 text-[9px] uppercase tracking-wider font-bold bg-primary hover:bg-primary/90">Post</Button>
-                      <Button type="button" variant="outline" size="sm" className="h-6 px-3 text-[9px] uppercase tracking-wider font-bold bg-secondary border-border hover:bg-white/5"><BrainCircuit className="w-3 h-3 mr-1.5"/> Share Sim</Button>
-                      <Button type="button" variant="outline" size="sm" className="h-6 px-3 text-[9px] uppercase tracking-wider font-bold bg-secondary border-border hover:bg-white/5"><Crosshair className="w-3 h-3 mr-1.5"/> Share Prediction</Button>
+                      <Button type="submit" size="sm" className="h-6 px-3 text-[9px] uppercase tracking-wider font-bold bg-primary hover:bg-primary/90">{t('community.postButton')}</Button>
+                      <Button type="button" variant="outline" size="sm" className="h-6 px-3 text-[9px] uppercase tracking-wider font-bold bg-secondary border-border hover:bg-white/5"><BrainCircuit className="w-3 h-3 mr-1.5"/> Compartir Sim</Button>
+                      <Button type="button" variant="outline" size="sm" className="h-6 px-3 text-[9px] uppercase tracking-wider font-bold bg-secondary border-border hover:bg-white/5"><Crosshair className="w-3 h-3 mr-1.5"/> Compartir Pronóstico</Button>
                     </div>
                   </div>
                 </form>
@@ -412,7 +412,7 @@ export function CommunityView() {
                     <div className="p-3 rounded-lg border border-white/5 bg-black/40">
                       <div className="flex items-center gap-2 mb-2">
                          <BrainCircuit className="w-4 h-4 text-emerald-400" />
-                         <span className="text-[10px] font-black uppercase text-emerald-400 tracking-widest">Shared Simulation</span>
+                         <span className="text-[10px] font-black uppercase text-emerald-400 tracking-widest">Simulación Compartida</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                          <div className="flex items-center gap-2">
@@ -466,13 +466,13 @@ export function CommunityView() {
                             type="text" 
                             value={commentText}
                             onChange={(e) => setCommentText(e.target.value)}
-                            placeholder="Write a reply..." 
+                            placeholder="Escribe una respuesta..." 
                             className="h-8 text-xs bg-secondary/50 border-border/50 flex-1"
                           />
-                          <Button type="submit" size="sm" className="h-8 text-[9px] uppercase font-bold">Reply</Button>
+                          <Button type="submit" size="sm" className="h-8 text-[9px] uppercase font-bold">Responder</Button>
                         </form>
                       ) : (
-                        <div className="text-[9px] font-bold text-slate-500 uppercase text-center py-1 bg-secondary/20 rounded">Login to comment</div>
+                        <div className="text-[9px] font-bold text-slate-500 uppercase text-center py-1 bg-secondary/20 rounded">Inicia sesión para comentar</div>
                       )}
                     </div>
                   )}
@@ -487,13 +487,13 @@ export function CommunityView() {
         <div className="lg:col-span-3 flex flex-col gap-4 overflow-y-auto pl-2 no-scrollbar">
           <div className="bg-card rounded-xl border border-border p-4">
             <h3 className="text-[10px] font-black uppercase text-white tracking-widest flex items-center gap-2 mb-4">
-              <Trophy className="w-3.5 h-3.5 text-yellow-400" /> Global Leaderboard
+              <Trophy className="w-3.5 h-3.5 text-yellow-400" /> {t('community.leagueStandings')}
             </h3>
             
             {rankingsLoading ? (
               <div className="flex justify-center py-6"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
             ) : rankings.length === 0 ? (
-              <div className="text-center py-6 text-slate-500 text-xs font-bold uppercase">Rankings Empty</div>
+              <div className="text-center py-6 text-slate-500 text-xs font-bold uppercase">Sin Posiciones</div>
             ) : (
               <div className="space-y-4">
                 {rankings.map((p, idx) => (

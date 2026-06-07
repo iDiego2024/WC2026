@@ -22,7 +22,7 @@ export function MatchDetailView() {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-400 animate-in fade-in duration-500 min-h-[400px]">
         <div className="w-8 h-8 rounded-full border-t-2 border-primary animate-spin"></div>
-        <p className="text-xs font-bold uppercase tracking-widest animate-pulse">{t('Cargando Partido...', 'Loading Match...')}</p>
+        <p className="text-xs font-bold uppercase tracking-widest animate-pulse">{t('common.loading')}</p>
       </div>
     );
   }
@@ -33,7 +33,7 @@ export function MatchDetailView() {
         <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center border border-red-500/20">
            <AlertCircle className="w-6 h-6 text-red-500" />
         </div>
-        <h3 className="text-sm font-bold text-white tracking-wide">{t('Error de Conexión', 'Connection Error')}</h3>
+        <h3 className="text-sm font-bold text-white tracking-wide">{t('common.connectionError')}</h3>
         <p className="text-xs max-w-sm text-center opacity-80">{error.message}</p>
       </div>
     );
@@ -43,8 +43,8 @@ export function MatchDetailView() {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-400 animate-in fade-in duration-500 min-h-[400px]">
         <Activity className="w-10 h-10 opacity-20" />
-        <h3 className="text-sm font-bold text-white tracking-wide">{t('Partido No Encontrado', 'Match Not Found')}</h3>
-        <p className="text-xs max-w-sm text-center opacity-80">{t('No pudimos encontrar la información de este partido.', 'We could not find the information for this match.')}</p>
+        <h3 className="text-sm font-bold text-white tracking-wide">{t('common.noData')}</h3>
+        <p className="text-xs max-w-sm text-center opacity-80">{t('common.noDataDesc')}</p>
       </div>
     );
   }
@@ -55,8 +55,8 @@ export function MatchDetailView() {
      return (
       <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-400 animate-in fade-in duration-500 min-h-[400px]">
         <Activity className="w-10 h-10 opacity-20" />
-        <h3 className="text-sm font-bold text-white tracking-wide">{t('Datos Incompletos', 'Incomplete Data')}</h3>
-        <p className="text-xs max-w-sm text-center opacity-80">{t('Faltan datos de los equipos.', 'Team data is missing.')}</p>
+        <h3 className="text-sm font-bold text-white tracking-wide">{t('common.noData')}</h3>
+        <p className="text-xs max-w-sm text-center opacity-80">{t('common.noDataDesc')}</p>
       </div>
     );
   }
@@ -181,7 +181,7 @@ export function MatchDetailView() {
           <ChevronLeft className="w-4 h-4 text-slate-300" />
         </button>
         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-          {match.stage} {match.group_name && `• ${t('Grupo', 'Group')} ${match.group_name}`} • {stadium?.name || stadium?.city || 'TBD'}
+          {match.stage} {match.group_name && `• Grupo ${match.group_name}`} • {stadium?.name || stadium?.city || 'TBD'}
         </div>
       </div>
 
@@ -199,17 +199,17 @@ export function MatchDetailView() {
               <img src={`https://flagcdn.com/w160/${home.flag_code.toLowerCase()}.png`} className="w-20 md:w-28 h-auto rounded shadow-lg border border-white/10" alt={home.name} />
               <div className="text-center">
                 <h2 className="text-lg md:text-2xl font-black text-white">{home.name}</h2>
-                <div className="text-[10px] font-bold text-slate-500 uppercase">{t('Ranking', 'Rank')} {home.fifa_rank || '?'}</div>
+                <div className="text-[10px] font-bold text-slate-500 uppercase">Ranking {home.fifa_rank || '?'}</div>
               </div>
             </div>
 
             {/* Score & Context */}
             <div className="flex flex-col items-center justify-center w-1/3 shrink-0">
               {match.status === 'live' && (
-                <div className="text-xs font-bold text-primary animate-pulse mb-2 tracking-widest bg-primary/10 px-3 py-1 rounded border border-primary/20">{t('EN VIVO', 'LIVE')}</div>
+                <div className="text-xs font-bold text-primary animate-pulse mb-2 tracking-widest bg-primary/10 px-3 py-1 rounded border border-primary/20">{t('matches.live')}</div>
               )}
               {match.status === 'finished' && (
-                <div className="text-xs font-bold text-slate-400 mb-2 tracking-widest px-3 py-1 rounded">{t('FINALIZADO', 'FINISHED')}</div>
+                <div className="text-xs font-bold text-slate-400 mb-2 tracking-widest px-3 py-1 rounded">{t('matches.finished')}</div>
               )}
               {match.status === 'scheduled' && (
                 <div className="text-xs font-bold text-slate-400 mb-2 tracking-widest px-3 py-1 rounded">{format(new Date(match.date), 'dd MMM HH:mm')}</div>
@@ -227,7 +227,7 @@ export function MatchDetailView() {
               <img src={`https://flagcdn.com/w160/${away.flag_code.toLowerCase()}.png`} className="w-20 md:w-28 h-auto rounded shadow-lg border border-white/10" alt={away.name} />
               <div className="text-center">
                 <h2 className="text-lg md:text-2xl font-black text-white">{away.name}</h2>
-                <div className="text-[10px] font-bold text-slate-500 uppercase">{t('Ranking', 'Rank')} {away.fifa_rank || '?'}</div>
+                <div className="text-[10px] font-bold text-slate-500 uppercase">Ranking {away.fifa_rank || '?'}</div>
               </div>
             </div>
           </div>
@@ -237,13 +237,13 @@ export function MatchDetailView() {
         <div className="h-10 bg-secondary/80 border-t border-border flex items-center">
           <div className="flex items-center justify-center w-full text-[10px] font-bold h-full">
             <div className="h-full bg-blue-600 flex items-center justify-start px-4 text-white" style={{ width: `${homeProb}%` }}>
-              {home.code} {t('GANA', 'WIN')} {homeProb}%
+              {home.code} GANA {homeProb}%
             </div>
             <div className="h-full bg-slate-700 flex items-center justify-center text-slate-300" style={{ width: `${drawProb}%` }}>
-              {t('EMPATE', 'DRAW')} {drawProb}%
+              {t('dashboard.draw').toUpperCase()} {drawProb}%
             </div>
             <div className="h-full bg-red-600 flex items-center justify-end px-4 text-white" style={{ width: `${awayProb}%` }}>
-              {awayProb}% {away.code} {t('GANA', 'WIN')}
+              {awayProb}% {away.code} GANA
             </div>
           </div>
         </div>
@@ -252,12 +252,12 @@ export function MatchDetailView() {
       {/* Main Content Tabs */}
       <Tabs defaultValue="overview" className="flex-1 flex flex-col mt-2">
         <TabsList className="w-full bg-secondary border border-border h-10 p-1 rounded-lg shrink-0 overflow-x-auto justify-start no-scrollbar">
-          <TabsTrigger value="overview" className="text-[10px] font-bold uppercase rounded p-2 h-full data-[state=active]:bg-card data-[state=active]:text-primary transition-colors flex-1 min-w-[80px]">{t('Resumen', 'Overview')}</TabsTrigger>
-          <TabsTrigger value="stats" className="text-[10px] font-bold uppercase rounded p-2 h-full data-[state=active]:bg-card data-[state=active]:text-primary transition-colors flex-1 min-w-[80px]">{t('Estds y xG', 'Stats & xG')}</TabsTrigger>
-          <TabsTrigger value="tactics" className="text-[10px] font-bold uppercase rounded p-2 h-full data-[state=active]:bg-card data-[state=active]:text-primary transition-colors flex-1 min-w-[80px]">{t('Tácticas', 'Tactics')}</TabsTrigger>
+          <TabsTrigger value="overview" className="text-[10px] font-bold uppercase rounded p-2 h-full data-[state=active]:bg-card data-[state=active]:text-primary transition-colors flex-1 min-w-[80px]">{t('matchDetail.timeline')}</TabsTrigger>
+          <TabsTrigger value="stats" className="text-[10px] font-bold uppercase rounded p-2 h-full data-[state=active]:bg-card data-[state=active]:text-primary transition-colors flex-1 min-w-[80px]">{t('matchDetail.stats')}</TabsTrigger>
+          <TabsTrigger value="tactics" className="text-[10px] font-bold uppercase rounded p-2 h-full data-[state=active]:bg-card data-[state=active]:text-primary transition-colors flex-1 min-w-[80px]">{t('matchDetail.lineups')}</TabsTrigger>
           <TabsTrigger value="h2h" className="text-[10px] font-bold uppercase rounded p-2 h-full data-[state=active]:bg-card data-[state=active]:text-primary transition-colors flex-1 min-w-[80px]">H2H</TabsTrigger>
           <TabsTrigger value="ai" className="text-[10px] font-bold uppercase rounded p-2 h-full data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=active]:border-primary/30 transition-colors flex items-center justify-center gap-1.5 flex-1 min-w-[90px] border border-transparent">
-            <BrainCircuit className="w-3 h-3" /> {t('Predicciones', 'Predictions')}
+            <BrainCircuit className="w-3 h-3" /> {t('predictor.title')}
           </TabsTrigger>
         </TabsList>
 
@@ -269,9 +269,9 @@ export function MatchDetailView() {
               <div className="bg-card rounded-xl border border-border p-4 flex flex-col h-48 relative overflow-hidden">
                 <div className="flex items-center justify-between mb-4 z-10 relative">
                   <h3 className="text-[10px] font-black uppercase text-slate-300 flex items-center gap-2">
-                    <Activity className="w-3 h-3 text-primary animate-pulse" /> {t('Impulso en Vivo', 'Live Momentum')}
+                    <Activity className="w-3 h-3 text-primary animate-pulse" /> {t('ops.realtime')}
                   </h3>
-                  <span className="text-[9px] font-bold text-slate-500 bg-secondary px-2 py-0.5 rounded">{t('Cronología de Presión', 'Pressure Timeline')}</span>
+                  <span className="text-[9px] font-bold text-slate-500 bg-secondary px-2 py-0.5 rounded">Momentum</span>
                 </div>
                 {/* Seeded Momentum Chart */}
                 <div className="flex-1 border-b border-white/5 relative z-10 flex items-end justify-between px-2 pb-2">
@@ -294,7 +294,7 @@ export function MatchDetailView() {
               <div className="bg-card rounded-xl border border-border p-4 h-48 flex flex-col">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-[10px] font-black uppercase text-slate-300 flex items-center gap-2">
-                    <Crosshair className="w-3 h-3 text-emerald-400" /> {t('Goles Esperados (xG)', 'Expected Goals (xG)')}
+                    <Crosshair className="w-3 h-3 text-emerald-400" /> Goles Esperados (xG)
                   </h3>
                 </div>
                 <div className="flex-1 flex items-center justify-center gap-8">
@@ -314,7 +314,7 @@ export function MatchDetailView() {
             {/* Timeline */}
             <div className="bg-card rounded-xl border border-border flex flex-col">
               <div className="p-3 border-b border-border/50 bg-secondary/30">
-                <h3 className="text-[10px] font-black uppercase text-slate-300">{t('Línea de Tiempo', 'Match Timeline')}</h3>
+                <h3 className="text-[10px] font-black uppercase text-slate-300">{t('matchDetail.timeline')}</h3>
               </div>
               <div className="p-4 flex flex-col gap-4 relative">
                 {/* Timeline vertical line */}
@@ -333,11 +333,11 @@ export function MatchDetailView() {
                         {isGoal && (
                           <>
                             <div className="text-xs font-bold text-white">{event.player}</div>
-                            <div className="text-[9px] text-slate-400 uppercase font-medium">{t('Gol', 'Goal')}</div>
+                            <div className="text-[9px] text-slate-400 uppercase font-medium">{t('matchDetail.goals')}</div>
                           </>
                         )}
                         {isAssist && (
-                          <div className="text-[9px] text-slate-400 italic font-semibold">{t('Asistencia', 'Assist')}: {event.player} ({t('para', 'to')} {event.detail})</div>
+                          <div className="text-[9px] text-slate-400 italic font-semibold">Asist: {event.player} (para {event.detail})</div>
                         )}
                         {isYellow && <div className="text-xs font-bold text-white">{event.player}</div>}
                         {isRed && <div className="text-xs font-bold text-red-400">{event.player}</div>}
@@ -353,12 +353,12 @@ export function MatchDetailView() {
                             <div className="w-4 h-4 rounded-full bg-white flex items-center justify-center text-black text-[8px]">⚽</div>
                             <div>
                               <div className="text-xs font-bold text-white">{event.player}</div>
-                              <div className="text-[9px] text-slate-400 uppercase font-medium">{t('Gol', 'Goal')}</div>
+                              <div className="text-[9px] text-slate-400 uppercase font-medium">{t('matchDetail.goals')}</div>
                             </div>
                           </>
                         )}
                         {!isHome && isAssist && (
-                          <div className="text-[9px] text-slate-400 italic font-semibold">{t('Asistencia', 'Assist')}: {event.player} ({t('para', 'to')} {event.detail})</div>
+                          <div className="text-[9px] text-slate-400 italic font-semibold">Asist: {event.player} (para {event.detail})</div>
                         )}
                         {!isHome && isYellow && (
                           <>
@@ -389,7 +389,7 @@ export function MatchDetailView() {
 
                 {finalEvents.length === 0 && (
                   <div className="text-center py-6 text-slate-500 text-xs font-bold uppercase">
-                    {t('Sin eventos registrados', 'No events recorded')}
+                    Sin eventos registrados
                   </div>
                 )}
               </div>
@@ -401,16 +401,16 @@ export function MatchDetailView() {
                 <BrainCircuit className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h4 className="text-[11px] font-bold text-primary uppercase tracking-wider mb-1">{t('Nota Táctica IA', 'AI Tactical Tip')}</h4>
+                <h4 className="text-[11px] font-bold text-primary uppercase tracking-wider mb-1">{t('matchDetail.tacticalInsights')}</h4>
                 <p className="text-xs text-slate-300 leading-relaxed">
                   {match.status === 'scheduled' ? (
-                    `${t('Modelo predictivo calcula ventaja táctica para', 'Predictive model calculates tactical edge for')} ${homeStrength > awayStrength ? home.name : away.name} (${t('fuerza de ataque superior', 'superior attack strength')}). ${t('Se proyecta un partido con promedio de', 'A match with average goals projection of')} ${((homeStrength + awayStrength) / 50).toFixed(1)} ${t('goles.', 'goals.')}`
+                    `Modelo predictivo calcula ventaja táctica para ${homeStrength > awayStrength ? home.name : away.name} (fuerza de ataque superior). Se proyecta un partido con promedio de ${((homeStrength + awayStrength) / 50).toFixed(1)} goles.`
                   ) : hScore > aScore ? (
-                    `${t('Dominio de posesión táctica de', 'Tactical possession dominance by')} ${home.name} (${finalStats.possession[0]}%). ${t('Las líneas de presión media rompieron la defensa de', 'Mid-block lines broke down the defense of')} ${away.name}.`
+                    `Dominio de posesión táctica de ${home.name} (${finalStats.possession[0]}%). Las líneas de presión media rompieron la defensa de ${away.name}.`
                   ) : aScore > hScore ? (
-                    `${t('Transición rápida efectiva de', 'Effective quick transition by')} ${away.name}. ${t('Explotaron las bandas de', 'They exploited the flanks of')} ${home.name} ${t('con contraataques rápidos.', 'with rapid counter-attacks.')}`
+                    `Transición rápida efectiva de ${away.name}. Explotaron las bandas de ${home.name} con contraataques rápidos.`
                   ) : (
-                    `${t('Partido táctico equilibrado.', 'Tactical balanced match.')} ${t('Ambos equipos neutralizaron los ataques en el mediocampo con una precisión de pase de', 'Both teams neutralized midfield attacks with pass accuracy of')} ${finalStats.passAccuracy[0]}% / ${finalStats.passAccuracy[1]}%.`
+                    `Partido táctico equilibrado. Ambos equipos neutralizaron los ataques en el mediocampo con una precisión de pase de ${finalStats.passAccuracy[0]}% / ${finalStats.passAccuracy[1]}%.`
                   )}
                 </p>
               </div>
@@ -420,19 +420,19 @@ export function MatchDetailView() {
 
           {/* Stats Tab Content */}
           <TabsContent value="stats" className="bg-card border border-border p-4 rounded-xl space-y-4">
-            <h3 className="text-xs font-black uppercase text-slate-300 mb-2 tracking-wider">{t('Estadísticas Completas del Partido', 'Full Match Statistics')}</h3>
+            <h3 className="text-xs font-black uppercase text-slate-300 mb-2 tracking-wider">{t('matchDetail.stats')}</h3>
             <div className="space-y-4">
               {[
-                { label: t('Posesión de Balón', 'Ball Possession'), key: 'possession', unit: '%' },
-                { label: t('Tiros Totales', 'Total Shots'), key: 'shots', unit: '' },
-                { label: t('Tiros al Arco', 'Shots on Target'), key: 'shotsOnTarget', unit: '' },
-                { label: t('Tiros de Esquina', 'Corner Kicks'), key: 'corners', unit: '' },
-                { label: t('Faltas Cometidas', 'Fouls Committed'), key: 'fouls', unit: '' },
-                { label: t('Tarjetas Amarillas', 'Yellow Cards'), key: 'yellowCards', unit: '' },
-                { label: t('Tarjetas Rojas', 'Red Cards'), key: 'redCards', unit: '' },
-                { label: t('Pases Totales', 'Total Passes'), key: 'passes', unit: '' },
-                { label: t('Precisión de Pases', 'Pass Accuracy'), key: 'passAccuracy', unit: '%' },
-                { label: t('Distancia Recorrida', 'Distance Run'), key: 'distanceRun', unit: ' km' }
+                { label: t('matchDetail.passAccuracy').split(' ')[1] || 'Posesión', key: 'possession', unit: '%' },
+                { label: t('matchDetail.shots'), key: 'shots', unit: '' },
+                { label: t('matchDetail.shotsOnTarget'), key: 'shotsOnTarget', unit: '' },
+                { label: t('matchDetail.corners'), key: 'corners', unit: '' },
+                { label: t('matchDetail.fouls'), key: 'fouls', unit: '' },
+                { label: 'Tarjetas Amarillas', key: 'yellowCards', unit: '' },
+                { label: 'Tarjetas Rojas', key: 'redCards', unit: '' },
+                { label: t('matchDetail.passes'), key: 'passes', unit: '' },
+                { label: t('matchDetail.passAccuracy'), key: 'passAccuracy', unit: '%' },
+                { label: t('matchDetail.distanceRun'), key: 'distanceRun', unit: ' km' }
               ].map((stat) => {
                 const val = finalStats[stat.key as keyof typeof finalStats];
                 const homeVal = val[0];
@@ -498,7 +498,7 @@ export function MatchDetailView() {
 
           {/* Historical H2H Tab */}
           <TabsContent value="h2h" className="bg-card border border-border p-4 rounded-xl space-y-4">
-            <h3 className="text-xs font-black uppercase text-white mb-2 tracking-wider">{t('Historial de Enfrentamientos Directos (H2H)', 'Direct Head-to-Head History (H2H)')}</h3>
+            <h3 className="text-xs font-black uppercase text-white mb-2 tracking-wider">Historial H2H</h3>
             <div className="space-y-3">
               {finalH2H.map((hMatch, idx) => (
                 <div key={idx} className="flex items-center justify-between bg-secondary/40 border border-white/5 rounded-xl p-3 hover:bg-secondary/60 transition-colors">
@@ -525,7 +525,7 @@ export function MatchDetailView() {
 
               {finalH2H.length === 0 && (
                 <div className="text-center py-6 text-slate-500 text-xs font-bold uppercase">
-                  {t('No hay registros históricos recientes', 'No recent historical records')}
+                  No hay registros históricos recientes
                 </div>
               )}
             </div>
@@ -536,21 +536,21 @@ export function MatchDetailView() {
             <div className="flex items-center justify-between border-b border-border/50 pb-3">
               <div>
                 <h3 className="text-xs font-black uppercase text-white tracking-wide flex items-center gap-2">
-                  <BrainCircuit className="w-4 h-4 text-primary animate-pulse" /> {t('Simulador Inteligente IA', 'AI Match Simulator')}
+                  <BrainCircuit className="w-4 h-4 text-primary animate-pulse" /> Simulador Inteligente IA
                 </h3>
-                <p className="text-[9px] text-slate-500 uppercase mt-0.5">Based on Poisson Goal Distribution Engine (10,000 runs)</p>
+                <p className="text-[9px] text-slate-500 uppercase mt-0.5">Basado en distribución Poisson (10,000 corridas)</p>
               </div>
-              <Badge variant="outline" className="text-[9px] font-mono border-primary/20 text-primary uppercase">Model Active</Badge>
+              <Badge variant="outline" className="text-[9px] font-mono border-primary/20 text-primary uppercase">Modelo Activo</Badge>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
-                <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Outcome Probabilities</h4>
+                <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Probabilidad del Resultado</h4>
                 <div className="space-y-3">
                   {[
-                    { label: `${home.name} Win`, val: homeProb, color: 'bg-blue-600' },
-                    { label: 'Draw', val: drawProb, color: 'bg-slate-700' },
-                    { label: `${away.name} Win`, val: awayProb, color: 'bg-red-600' }
+                    { label: `Gana ${home.name}`, val: homeProb, color: 'bg-blue-600' },
+                    { label: 'Empate', val: drawProb, color: 'bg-slate-700' },
+                    { label: `Gana ${away.name}`, val: awayProb, color: 'bg-red-600' }
                   ].map((item, idx) => (
                     <div key={idx} className="space-y-1">
                       <div className="flex justify-between text-xs font-bold text-white">
@@ -566,7 +566,7 @@ export function MatchDetailView() {
               </div>
 
               <div className="space-y-4">
-                <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Most Likely Scorelines</h4>
+                <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Marcadores Más Probables</h4>
                 <div className="space-y-2">
                   {[
                     { score: '1 - 0', prob: Math.round(homeProb * 0.35) },
@@ -578,7 +578,7 @@ export function MatchDetailView() {
                   .map((item, idx) => (
                     <div key={idx} className="flex items-center justify-between text-xs bg-secondary/40 p-2 rounded border border-white/5">
                       <span className="font-bold text-white font-mono">{item.score}</span>
-                      <span className="text-slate-400 font-mono font-bold">{item.prob}% Probability</span>
+                      <span className="text-slate-400 font-mono font-bold">{item.prob}% de Probabilidad</span>
                     </div>
                   ))}
                 </div>

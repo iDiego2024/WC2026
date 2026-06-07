@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Tv, Trophy, Activity, Users, Clock, X, ChevronRight, TrendingUp } from 'lucide-react';
 import { useMatches, useRankings, useTeams, useNewsArticles } from '../hooks/useData';
 import { runMonteCarlo } from '../utils/simulatorEngine';
+import { useLanguage } from '../context/LanguageContext';
 
 export function TvModeView() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [time, setTime] = useState(new Date());
   
   const { matches, loading: matchesLoading } = useMatches();
@@ -105,27 +107,27 @@ export function TvModeView() {
   }
 
   if (topContenders[0]) {
-    tickerNews.push(`AI SIMULATOR: ${topContenders[0].name} leads championship win probability with ${topContenders[0].wins}% chance.`);
+    tickerNews.push(`AI SIMULATOR: ${topContenders[0].name} lidera la probabilidad con ${topContenders[0].wins}% de ganar el campeonato.`);
   }
   if (topContenders[1]) {
-    tickerNews.push(`CONTENDER: ${topContenders[1].name} ranks #2 with ${topContenders[1].wins}% win probability.`);
+    tickerNews.push(`CONTENDIENTE: ${topContenders[1].name} clasifica #2 con ${topContenders[1].wins}% de probabilidad.`);
   }
   if (rankings[0]) {
-    tickerNews.push(`GLOBAL PREDICTOR LEADER: ${rankings[0].display_name} holds #1 rank with ${rankings[0].score} pts!`);
+    tickerNews.push(`LÍDER DE PRONÓSTICOS: ¡${rankings[0].display_name} en #1 con ${rankings[0].score} pts!`);
   }
   const finishedMatches = matches.filter(m => m.status === 'finished');
   if (finishedMatches.length > 0) {
     const m = finishedMatches[finishedMatches.length - 1];
-    tickerNews.push(`LATEST RESULT: ${m.home_team?.name} ${m.home_score} - ${m.away_score} ${m.away_team?.name} (FT).`);
+    tickerNews.push(`ÚLTIMO RESULTADO: ${m.home_team?.name} ${m.home_score} - ${m.away_score} ${m.away_team?.name} (FT).`);
   }
   const scheduled = matches.filter(m => m.status === 'scheduled');
   if (scheduled[0]) {
-    tickerNews.push(`UPCOMING FIXTURE: ${scheduled[0].home_team?.name} vs ${scheduled[0].away_team?.name} in ${scheduled[0].stadium?.city || 'TBD'}.`);
+    tickerNews.push(`PRÓXIMO PARTIDO: ${scheduled[0].home_team?.name} vs ${scheduled[0].away_team?.name} en ${scheduled[0].stadium?.city || 'TBD'}.`);
   }
 
   // Ensure enough items for marquee rotation
   while (tickerNews.length < 5) {
-    tickerNews.push("TV TICKER: Live forecast statistics and matchday standings updating in real-time.");
+    tickerNews.push("TV TICKER: Estadísticas en vivo y posiciones del torneo actualizándose en tiempo real.");
   }
 
   return (
@@ -134,12 +136,12 @@ export function TvModeView() {
       <header className="h-16 shrink-0 border-b border-border/50 flex items-center justify-between px-8 bg-secondary/30">
         <div className="flex items-center gap-4">
           <Tv className="w-8 h-8 text-primary animate-pulse" />
-          <h1 className="text-3xl font-black uppercase tracking-widest">Ultimate Tracker <span className="text-primary font-mono ml-2">TV</span></h1>
+          <h1 className="text-3xl font-black uppercase tracking-widest">{t('nav.tv')} <span className="text-primary font-mono ml-2">TV</span></h1>
         </div>
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-            <span className="text-xl font-bold uppercase tracking-widest text-red-400">Live Broadcast</span>
+            <span className="text-xl font-bold uppercase tracking-widest text-red-400">EN VIVO</span>
           </div>
           <div className="text-2xl font-mono font-bold text-slate-300">
             {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
@@ -147,7 +149,7 @@ export function TvModeView() {
           <button 
             onClick={() => navigate(-1)} 
             className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
-            title="Exit TV Mode"
+            title="Salir Modo TV"
           >
             <X className="w-6 h-6" />
           </button>
@@ -165,13 +167,13 @@ export function TvModeView() {
             
             <div className="p-5 border-b border-border/50 bg-secondary/50">
               <h2 className="text-xl font-black uppercase tracking-widest text-white flex items-center gap-3">
-                <Clock className="w-6 h-6 text-primary" /> Live & Recent
+                <Clock className="w-6 h-6 text-primary" /> {t('ops.realtime')}
               </h2>
             </div>
             
             <div className="p-5 flex-1 flex flex-col justify-between">
               {displayMatches.length === 0 ? (
-                <div className="flex items-center justify-center flex-1 text-slate-500 text-xs font-bold uppercase tracking-widest">No Matches Scheduled</div>
+                <div className="flex items-center justify-center flex-1 text-slate-500 text-xs font-bold uppercase tracking-widest">{t('common.noData')}</div>
               ) : (
                 displayMatches.map((match, i) => {
                   const home = match.home_team;
@@ -218,7 +220,7 @@ export function TvModeView() {
             
             <div className="p-5 border-b border-border/50 bg-secondary/50">
               <h2 className="text-xl font-black uppercase tracking-widest text-emerald-400 flex items-center gap-3">
-                <Activity className="w-6 h-6" /> AI Win Probability
+                <Activity className="w-6 h-6" /> {t('dashboard.winProb')}
               </h2>
             </div>
             
@@ -249,8 +251,8 @@ export function TvModeView() {
             <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50"></div>
             <div className="p-4 border-b border-border/50 bg-secondary/50">
               <h2 className="text-lg font-black uppercase tracking-widest text-white flex items-center justify-between">
-                <span>Group A</span>
-                <span className="text-xs text-slate-500">Live Standings</span>
+                <span>Grupo A</span>
+                <span className="text-xs text-slate-500">{t('twin.projectedStandings')}</span>
               </h2>
             </div>
             <div className="p-4 flex-1">
@@ -258,8 +260,8 @@ export function TvModeView() {
                   <thead>
                     <tr className="text-xs uppercase font-bold text-slate-500 border-b border-border/50">
                       <th className="pb-3 w-8">#</th>
-                      <th className="pb-3">Team</th>
-                      <th className="pb-3 text-center w-8">GD</th>
+                      <th className="pb-3">{t('dashboard.team')}</th>
+                      <th className="pb-3 text-center w-8">DG</th>
                       <th className="pb-3 text-center w-12">Pts</th>
                     </tr>
                   </thead>
@@ -277,7 +279,7 @@ export function TvModeView() {
                     ))}
                     {groupATeams.length === 0 && (
                       <tr>
-                        <td colSpan={4} className="py-4 text-center text-slate-500 text-xs font-bold uppercase">No Teams Available</td>
+                        <td colSpan={4} className="py-4 text-center text-slate-500 text-xs font-bold uppercase">{t('common.noData')}</td>
                       </tr>
                     )}
                   </tbody>
@@ -290,7 +292,7 @@ export function TvModeView() {
             <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-yellow-400 to-transparent opacity-50"></div>
             <div className="p-4 border-b border-border/50 bg-secondary/50">
               <h2 className="text-lg font-black uppercase tracking-widest text-yellow-500 flex items-center gap-3">
-                <Trophy className="w-5 h-5" /> Global Leaders
+                <Trophy className="w-5 h-5" /> {t('community.leagueStandings')}
               </h2>
             </div>
             <div className="p-4 flex-1 flex flex-col justify-between">
@@ -311,7 +313,7 @@ export function TvModeView() {
                 </div>
               ))}
               {rankings.length === 0 && (
-                <div className="flex items-center justify-center flex-1 text-slate-500 text-xs font-bold uppercase">Leaderboard Empty</div>
+                <div className="flex items-center justify-center flex-1 text-slate-500 text-xs font-bold uppercase">{t('common.noData')}</div>
               )}
             </div>
           </div>
@@ -322,7 +324,7 @@ export function TvModeView() {
       {/* Ticker at bottom */}
       <div className="absolute bottom-0 inset-x-0 h-16 bg-primary text-background border-t-4 border-emerald-400 flex items-center overflow-hidden z-10">
          <div className="bg-black/90 text-white h-full px-8 flex items-center font-black uppercase tracking-widest shrink-0 border-r border-white/20 shadow-2xl z-20">
-           LATEST NEWS
+           {t('dashboard.news').toUpperCase()}
          </div>
          {/* Marquee Animation */}
          <div className="flex-1 overflow-hidden relative h-full">

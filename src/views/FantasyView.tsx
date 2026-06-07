@@ -3,8 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Shield, ArrowRightLeft, Trophy, FileText, Info, Search, Filter, HelpCircle, Star } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export function FantasyView() {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('squad');
 
   return (
@@ -12,18 +14,18 @@ export function FantasyView() {
       <header className="space-y-0.5 mb-2 border-b border-border/50 pb-4 shrink-0">
         <h1 className="text-2xl font-black tracking-tight text-white uppercase flex items-center gap-3">
           <Shield className="w-6 h-6 text-primary" />
-          Fantasy World Cup
+          {t('fantasy.title')}
         </h1>
-        <p className="text-xs text-slate-400 font-medium tracking-wide uppercase">Manage your ultimate squad & conquer the global leaderboard</p>
+        <p className="text-xs text-slate-400 font-medium tracking-wide uppercase">{t('fantasy.subtitle')}</p>
       </header>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
         <div className="bg-secondary/30 border border-border/50 p-2 rounded-xl mb-4 shrink-0 overflow-x-auto no-scrollbar">
           <TabsList className="bg-transparent h-10 p-0 space-x-2 w-full justify-start">
-            <TabsTrigger value="squad" className="text-[10px] font-bold uppercase rounded-lg data-[state=active]:bg-primary/20 data-[state=active]:text-primary h-full px-4 border border-transparent data-[state=active]:border-primary/30 flex items-center gap-2"><Shield className="w-3.5 h-3.5"/> My Squad</TabsTrigger>
-            <TabsTrigger value="transfers" className="text-[10px] font-bold uppercase rounded-lg data-[state=active]:bg-primary/20 data-[state=active]:text-primary h-full px-4 border border-transparent data-[state=active]:border-primary/30 flex items-center gap-2"><ArrowRightLeft className="w-3.5 h-3.5"/> Transfers</TabsTrigger>
-            <TabsTrigger value="leagues" className="text-[10px] font-bold uppercase rounded-lg data-[state=active]:bg-primary/20 data-[state=active]:text-primary h-full px-4 border border-transparent data-[state=active]:border-primary/30 flex items-center gap-2"><Trophy className="w-3.5 h-3.5"/> Leagues</TabsTrigger>
-            <TabsTrigger value="rules" className="text-[10px] font-bold uppercase rounded-lg data-[state=active]:bg-secondary data-[state=active]:text-white h-full px-4 border border-transparent data-[state=active]:border-white/10 flex items-center gap-2"><FileText className="w-3.5 h-3.5"/> Rules & Scoring</TabsTrigger>
+            <TabsTrigger value="squad" className="text-[10px] font-bold uppercase rounded-lg data-[state=active]:bg-primary/20 data-[state=active]:text-primary h-full px-4 border border-transparent data-[state=active]:border-primary/30 flex items-center gap-2"><Shield className="w-3.5 h-3.5"/> {t('fantasy.mySquad')}</TabsTrigger>
+            <TabsTrigger value="transfers" className="text-[10px] font-bold uppercase rounded-lg data-[state=active]:bg-primary/20 data-[state=active]:text-primary h-full px-4 border border-transparent data-[state=active]:border-primary/30 flex items-center gap-2"><ArrowRightLeft className="w-3.5 h-3.5"/> {t('fantasy.transfers')}</TabsTrigger>
+            <TabsTrigger value="leagues" className="text-[10px] font-bold uppercase rounded-lg data-[state=active]:bg-primary/20 data-[state=active]:text-primary h-full px-4 border border-transparent data-[state=active]:border-primary/30 flex items-center gap-2"><Trophy className="w-3.5 h-3.5"/> {t('fantasy.leagues')}</TabsTrigger>
+            <TabsTrigger value="rules" className="text-[10px] font-bold uppercase rounded-lg data-[state=active]:bg-secondary data-[state=active]:text-white h-full px-4 border border-transparent data-[state=active]:border-white/10 flex items-center gap-2"><FileText className="w-3.5 h-3.5"/> {t('fantasy.rules')}</TabsTrigger>
           </TabsList>
         </div>
 
@@ -35,20 +37,20 @@ export function FantasyView() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                <div className="bg-card border border-border rounded-xl p-3 flex flex-col items-center justify-center relative overflow-hidden">
                  <div className="absolute top-0 w-full h-1 bg-emerald-500 leading-none"></div>
-                 <span className="text-[10px] font-bold uppercase text-slate-500 tracking-widest mb-1 mt-1">Gameweek Pts</span>
+                 <span className="text-[10px] font-bold uppercase text-slate-500 tracking-widest mb-1 mt-1">{t('fantasy.gameweekPts')}</span>
                  <span className="text-3xl font-black text-white">64</span>
                </div>
                <div className="bg-card border border-border rounded-xl p-3 flex flex-col items-center justify-center">
-                 <span className="text-[10px] font-bold uppercase text-slate-500 tracking-widest mb-1">Overall Rank</span>
+                 <span className="text-[10px] font-bold uppercase text-slate-500 tracking-widest mb-1">{t('fantasy.overallRank')}</span>
                  <span className="text-xl font-black text-white">#12,402</span>
                </div>
                <div className="bg-card border border-border rounded-xl p-3 flex flex-col items-center justify-center">
-                 <span className="text-[10px] font-bold uppercase text-slate-500 tracking-widest mb-1">Total Points</span>
+                 <span className="text-[10px] font-bold uppercase text-slate-500 tracking-widest mb-1">{t('fantasy.totalPoints')}</span>
                  <span className="text-xl font-black text-white">215</span>
                </div>
                <div className="bg-card border border-border rounded-xl p-3 flex flex-col items-center justify-center relative overflow-hidden">
                  <div className="absolute top-0 w-full h-1 bg-yellow-400"></div>
-                 <span className="text-[10px] font-bold uppercase text-slate-500 tracking-widest mb-1 mt-1">Team Value</span>
+                 <span className="text-[10px] font-bold uppercase text-slate-500 tracking-widest mb-1 mt-1">{t('fantasy.teamValue')}</span>
                  <span className="text-xl font-black text-white font-mono">€101.4m</span>
                </div>
             </div>
@@ -91,8 +93,8 @@ export function FantasyView() {
             {/* Bench */}
             <div className="bg-card border border-border rounded-xl p-4">
               <div className="flex items-center justify-between mb-4 border-b border-border/50 pb-2">
-                <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Substititutes</h3>
-                <span className="text-[9px] font-bold text-slate-500 uppercase">Bench Boost: Unused</span>
+                <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{t('fantasy.substitutes')}</h3>
+                <span className="text-[9px] font-bold text-slate-500 uppercase">{t('fantasy.benchBoost')}</span>
               </div>
               <div className="flex justify-center gap-4 md:gap-8 overflow-x-auto">
                 <PlayerCard name="Livakovic" team="CRO" price="5.0m" position="GK" points="0" isBench />
@@ -110,15 +112,15 @@ export function FantasyView() {
                  
                  <div className="bg-card border border-border rounded-xl p-4 flex items-center justify-between">
                    <div className="flex flex-col">
-                     <span className="text-[10px] font-bold uppercase text-slate-500 tracking-widest">Free Transfers</span>
+                     <span className="text-[10px] font-bold uppercase text-slate-500 tracking-widest">{t('fantasy.freeTransfers')}</span>
                      <span className="text-2xl font-black text-white">1</span>
                    </div>
                    <div className="flex flex-col items-center">
-                     <span className="text-[10px] font-bold uppercase text-slate-500 tracking-widest">Cost</span>
-                     <span className="text-2xl font-black text-red-400 font-mono">-0 pts</span>
+                     <span className="text-[10px] font-bold uppercase text-slate-500 tracking-widest">{t('fantasy.cost')}</span>
+                     <span className="text-2xl font-black text-red-400 font-mono">-0 {t('fantasy.pts')}</span>
                    </div>
                    <div className="flex flex-col items-end">
-                     <span className="text-[10px] font-bold uppercase text-slate-500 tracking-widest">Bank</span>
+                     <span className="text-[10px] font-bold uppercase text-slate-500 tracking-widest">{t('fantasy.bank')}</span>
                      <span className="text-2xl font-black text-primary font-mono">€1.5m</span>
                    </div>
                  </div>
@@ -127,20 +129,20 @@ export function FantasyView() {
                     <div className="p-4 border-b border-border/50 flex items-center gap-3">
                       <div className="relative flex-1">
                         <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                        <input type="text" placeholder="Search players..." className="w-full bg-secondary border border-white/5 rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-primary/50 transition-colors" />
+                        <input type="text" placeholder={t('fantasy.searchPlaceholder')} className="w-full bg-secondary border border-white/5 rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-primary/50 transition-colors" />
                       </div>
-                      <Button variant="outline" size="sm" className="bg-secondary border-border hover:bg-white/5 h-9"><Filter className="w-4 h-4 mr-2"/> Filters</Button>
+                      <Button variant="outline" size="sm" className="bg-secondary border-border hover:bg-white/5 h-9"><Filter className="w-4 h-4 mr-2"/> {t('fantasy.filters')}</Button>
                     </div>
                     <div className="flex-1 p-2">
                        <table className="w-full text-left text-xs">
                          <thead>
                            <tr className="text-[9px] uppercase font-bold text-slate-500 border-b border-border/50">
-                             <th className="p-2 w-10">Pos</th>
-                             <th className="p-2">Player</th>
-                             <th className="p-2 text-center">Team</th>
-                             <th className="p-2 text-right">Price</th>
-                             <th className="p-2 text-right">Selected</th>
-                             <th className="p-2 text-right">Pts</th>
+                             <th className="p-2 w-10">{t('fantasy.pos')}</th>
+                             <th className="p-2">{t('fantasy.player')}</th>
+                             <th className="p-2 text-center">{t('fantasy.team')}</th>
+                             <th className="p-2 text-right">{t('fantasy.price')}</th>
+                             <th className="p-2 text-right">{t('fantasy.selected')}</th>
+                             <th className="p-2 text-right">{t('fantasy.pts')}</th>
                              <th className="p-2 w-10"></th>
                            </tr>
                          </thead>
@@ -153,7 +155,7 @@ export function FantasyView() {
                              { name: 'A. Hakimi', pos: 'DEF', team: 'MAR', price: 6.5, sel: '18.2%', pts: 29 },
                            ].map((p, i) => (
                              <tr key={i} className="hover:bg-white/5 transition-colors">
-                               <td className="p-2 text-slate-400">{p.pos}</td>
+                               <td className="p-2 text-slate-400">{t(`fantasy.${p.pos.toLowerCase()}`, p.pos)}</td>
                                <td className="p-2 font-sans font-bold text-white flex items-center gap-2">
                                  <Info className="w-3 h-3 text-primary cursor-pointer" /> {p.name}
                                </td>
@@ -174,22 +176,22 @@ export function FantasyView() {
                
                <div className="lg:col-span-4 space-y-4">
                   <div className="bg-card border border-border rounded-xl p-4">
-                    <h3 className="text-[10px] font-black uppercase text-white tracking-widest mb-4">Transfers Out</h3>
+                    <h3 className="text-[10px] font-black uppercase text-white tracking-widest mb-4">{t('fantasy.transfersOut')}</h3>
                     <div className="flex items-center justify-center p-8 border-2 border-dashed border-border rounded-lg text-center">
                       <div>
-                        <div className="text-[10px] font-bold text-slate-500 uppercase">Click a player to remove</div>
+                        <div className="text-[10px] font-bold text-slate-500 uppercase">{t('fantasy.clickToRemove')}</div>
                       </div>
                     </div>
                   </div>
                   <div className="bg-card border border-border rounded-xl p-4">
-                    <h3 className="text-[10px] font-black uppercase text-white tracking-widest mb-4">Transfers In</h3>
+                    <h3 className="text-[10px] font-black uppercase text-white tracking-widest mb-4">{t('fantasy.transfersIn')}</h3>
                     <div className="flex items-center justify-center p-8 border-2 border-dashed border-border rounded-lg text-center">
                       <div>
-                        <div className="text-[10px] font-bold text-slate-500 uppercase">Select player from list</div>
+                        <div className="text-[10px] font-bold text-slate-500 uppercase">{t('fantasy.selectFromList')}</div>
                       </div>
                     </div>
                   </div>
-                  <Button className="w-full font-black uppercase tracking-widest text-xs h-12" disabled>Confirm Transfers</Button>
+                  <Button className="w-full font-black uppercase tracking-widest text-xs h-12" disabled>{t('fantasy.confirmTransfers')}</Button>
                </div>
             </div>
           </TabsContent>
@@ -203,51 +205,51 @@ export function FantasyView() {
                     <HelpCircle className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-primary uppercase tracking-wider mb-2">Fantasy Engine Architecture</h4>
-                    <p className="text-xs text-slate-300 leading-relaxed mb-4">The Fantasy World Cup engine runs on dedicated relational schemas optimized for high locking concurrency during transfer deadlines:</p>
+                    <h4 className="text-xs font-bold text-primary uppercase tracking-wider mb-2">{t('fantasy.engineTitle')}</h4>
+                    <p className="text-xs text-slate-300 leading-relaxed mb-4">{t('fantasy.engineDesc')}</p>
                     <ul className="text-xs text-slate-400 list-disc pl-4 space-y-1 font-mono">
-                      <li><span className="text-white">fantasy_teams:</span> Budget, Active Chips (Wildcard, Bench Boost), Total Points.</li>
-                      <li><span className="text-white">fantasy_players:</span> Live pricing models, ownership %, cumulative stats.</li>
-                      <li><span className="text-white">fantasy_rosters:</span> Junction table strictly enforcing formation rules (e.g., Min 3 DEF, 1 FWD). Tracks Captain flags.</li>
-                      <li><span className="text-white">fantasy_transfers:</span> Ledger of all movements, calculating point deductions (-4 pts) if free transfers are exceeded.</li>
+                      <li><span className="text-white">fantasy_teams:</span> {t('fantasy.ruleTeams')}</li>
+                      <li><span className="text-white">fantasy_players:</span> {t('fantasy.rulePlayers')}</li>
+                      <li><span className="text-white">fantasy_rosters:</span> {t('fantasy.ruleRosters')}</li>
+                      <li><span className="text-white">fantasy_transfers:</span> {t('fantasy.ruleTransfers')}</li>
                     </ul>
                   </div>
                </div>
 
                {/* Playing Rules */}
                <div className="bg-card border border-border rounded-xl p-5">
-                 <h3 className="text-[11px] font-black uppercase text-white tracking-widest mb-4 border-b border-border/50 pb-2">Squad Rules</h3>
+                 <h3 className="text-[11px] font-black uppercase text-white tracking-widest mb-4 border-b border-border/50 pb-2">{t('fantasy.squadRules')}</h3>
                  <ul className="text-xs text-slate-300 space-y-3">
-                   <li className="flex justify-between"><span>Squad Size:</span> <span className="font-bold text-white">15 Players</span></li>
-                   <li className="flex justify-between"><span>Starting XI:</span> <span className="font-bold text-white">11 Players</span></li>
-                   <li className="flex justify-between"><span>Max per Team:</span> <span className="font-bold text-white">3 Players</span></li>
-                   <li className="flex justify-between"><span>Starting Budget:</span> <span className="font-bold text-emerald-400 font-mono">€100.0m</span></li>
-                   <li className="flex justify-between"><span>Free Transfers:</span> <span className="font-bold text-white">1 per Round</span></li>
-                   <li className="flex justify-between"><span>Extra Transfer Cost:</span> <span className="font-bold text-red-400 font-mono">-4 Points</span></li>
+                   <li className="flex justify-between"><span>{t('fantasy.squadSize')}:</span> <span className="font-bold text-white">15 {t('fantasy.playersName')}</span></li>
+                   <li className="flex justify-between"><span>{t('fantasy.startingXI')}:</span> <span className="font-bold text-white">11 {t('fantasy.playersName')}</span></li>
+                   <li className="flex justify-between"><span>{t('fantasy.maxPerTeam')}:</span> <span className="font-bold text-white">3 {t('fantasy.playersName')}</span></li>
+                   <li className="flex justify-between"><span>{t('fantasy.startingBudget')}:</span> <span className="font-bold text-emerald-400 font-mono">€100.0m</span></li>
+                   <li className="flex justify-between"><span>{t('fantasy.roundFreeTransfers')}:</span> <span className="font-bold text-white">1</span></li>
+                   <li className="flex justify-between"><span>{t('fantasy.extraTransferCost')}:</span> <span className="font-bold text-red-400 font-mono">-4 {t('fantasy.pts')}</span></li>
                  </ul>
                </div>
 
                {/* Points System - Actions */}
                <div className="bg-card border border-border rounded-xl p-5">
-                 <h3 className="text-[11px] font-black uppercase text-white tracking-widest mb-4 border-b border-border/50 pb-2">Scoring: Attack</h3>
+                 <h3 className="text-[11px] font-black uppercase text-white tracking-widest mb-4 border-b border-border/50 pb-2">{t('fantasy.scoringAttack')}</h3>
                  <ul className="text-xs text-slate-300 space-y-3">
-                   <li className="flex justify-between"><span>Goal (FWD):</span> <span className="font-bold text-emerald-400 font-mono">+4 pts</span></li>
-                   <li className="flex justify-between"><span>Goal (MID):</span> <span className="font-bold text-emerald-400 font-mono">+5 pts</span></li>
-                   <li className="flex justify-between"><span>Goal (DEF/GK):</span> <span className="font-bold text-emerald-400 font-mono">+6 pts</span></li>
-                   <li className="flex justify-between"><span>Assist (All):</span> <span className="font-bold text-emerald-400 font-mono">+3 pts</span></li>
-                   <li className="flex justify-between"><span>Penalty Miss:</span> <span className="font-bold text-red-400 font-mono">-2 pts</span></li>
+                   <li className="flex justify-between"><span>{t('fantasy.goalFwd')}:</span> <span className="font-bold text-emerald-400 font-mono">+4 {t('fantasy.pts')}</span></li>
+                   <li className="flex justify-between"><span>{t('fantasy.goalMid')}:</span> <span className="font-bold text-emerald-400 font-mono">+5 {t('fantasy.pts')}</span></li>
+                   <li className="flex justify-between"><span>{t('fantasy.goalDefGk')}:</span> <span className="font-bold text-emerald-400 font-mono">+6 {t('fantasy.pts')}</span></li>
+                   <li className="flex justify-between"><span>{t('fantasy.assistAll')}:</span> <span className="font-bold text-emerald-400 font-mono">+3 {t('fantasy.pts')}</span></li>
+                   <li className="flex justify-between"><span>{t('fantasy.penaltyMiss')}:</span> <span className="font-bold text-red-400 font-mono">-2 {t('fantasy.pts')}</span></li>
                  </ul>
                </div>
 
                {/* Points System - Defense */}
                <div className="bg-card border border-border rounded-xl p-5">
-                 <h3 className="text-[11px] font-black uppercase text-white tracking-widest mb-4 border-b border-border/50 pb-2">Scoring: Defense</h3>
+                 <h3 className="text-[11px] font-black uppercase text-white tracking-widest mb-4 border-b border-border/50 pb-2">{t('fantasy.scoringDefense')}</h3>
                  <ul className="text-xs text-slate-300 space-y-3">
-                   <li className="flex justify-between"><span>Clean Sheet (DEF/GK):</span> <span className="font-bold text-emerald-400 font-mono">+4 pts</span></li>
-                   <li className="flex justify-between"><span>Clean Sheet (MID):</span> <span className="font-bold text-emerald-400 font-mono">+1 pt</span></li>
-                   <li className="flex justify-between"><span>Every 3 Saves (GK):</span> <span className="font-bold text-emerald-400 font-mono">+1 pt</span></li>
-                   <li className="flex justify-between"><span>Penalty Save (GK):</span> <span className="font-bold text-emerald-400 font-mono">+5 pts</span></li>
-                   <li className="flex justify-between"><span>Every 2 Goals Conceded:</span> <span className="font-bold text-red-400 font-mono">-1 pt</span></li>
+                   <li className="flex justify-between"><span>{t('fantasy.cleanSheetDefGk')}:</span> <span className="font-bold text-emerald-400 font-mono">+4 {t('fantasy.pts')}</span></li>
+                   <li className="flex justify-between"><span>{t('fantasy.cleanSheetMid')}:</span> <span className="font-bold text-emerald-400 font-mono">+1 {t('fantasy.pts')}</span></li>
+                   <li className="flex justify-between"><span>{t('fantasy.savesGk')}:</span> <span className="font-bold text-emerald-400 font-mono">+1 {t('fantasy.pts')}</span></li>
+                   <li className="flex justify-between"><span>{t('fantasy.penaltySave')}:</span> <span className="font-bold text-emerald-400 font-mono">+5 {t('fantasy.pts')}</span></li>
+                   <li className="flex justify-between"><span>{t('fantasy.goalsConceded')}:</span> <span className="font-bold text-red-400 font-mono">-1 {t('fantasy.pts')}</span></li>
                  </ul>
                </div>
              </div>
@@ -257,11 +259,11 @@ export function FantasyView() {
           <TabsContent value="leagues" className="m-0 h-full animate-in fade-in duration-300">
             <div className="flex flex-col items-center justify-center p-10 bg-card border border-border rounded-xl text-center space-y-4 mt-8">
               <Trophy className="w-16 h-16 text-yellow-400 mb-2" />
-              <h2 className="text-xl font-black text-white uppercase tracking-widest">Global & Private Leagues</h2>
-              <p className="text-sm text-slate-400 max-w-md">Create custom leagues with specific scoring rules, invite your friends, and compete for the ultimate World Cup Fantasy crown.</p>
+              <h2 className="text-xl font-black text-white uppercase tracking-widest">{t('fantasy.globalPrivateLeagues')}</h2>
+              <p className="text-sm text-slate-400 max-w-md">{t('fantasy.leaguesDesc')}</p>
               <div className="flex gap-4 mt-4">
-                <Button className="font-bold uppercase tracking-wider text-xs">Create League</Button>
-                <Button variant="outline" className="font-bold uppercase tracking-wider text-xs bg-transparent border-border hover:bg-white/5">Join via Code</Button>
+                <Button className="font-bold uppercase tracking-wider text-xs">{t('fantasy.createLeague')}</Button>
+                <Button variant="outline" className="font-bold uppercase tracking-wider text-xs bg-transparent border-border hover:bg-white/5">{t('fantasy.joinCode')}</Button>
               </div>
             </div>
           </TabsContent>

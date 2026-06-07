@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTeams, useMatches } from '../hooks/useData';
 import { runMonteCarlo } from '../utils/simulatorEngine';
+import { useLanguage } from '../context/LanguageContext';
 
 export function TwinView() {
+  const { t } = useLanguage();
   const [twinName, setTwinName] = useState('My Chaos Scenario #1');
   const [isCalculating, setIsCalculating] = useState(false);
   const { teams, loading: teamsLoading } = useTeams();
@@ -178,9 +180,9 @@ export function TwinView() {
         <div>
           <h1 className="text-2xl font-black tracking-tight text-white uppercase flex items-center gap-3">
             <Layers className="w-6 h-6 text-primary" />
-            Digital Twin
+            {t('twin.title')}
           </h1>
-          <p className="text-xs text-slate-400 font-medium tracking-wide uppercase">Fork reality. Modify results. See the butterfly effect.</p>
+          <p className="text-xs text-slate-400 font-medium tracking-wide uppercase">{t('twin.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <input 
@@ -189,7 +191,7 @@ export function TwinView() {
             onChange={(e) => setTwinName(e.target.value)}
             className="bg-secondary/50 border border-border rounded px-3 py-1.5 text-xs text-white font-bold w-48 focus:outline-none focus:border-primary/50"
           />
-          <Button variant="outline" size="sm" className="bg-secondary border-border h-8 text-[10px] font-bold uppercase"><Save className="w-3 h-3 mr-2"/> Save Twin</Button>
+          <Button variant="outline" size="sm" className="bg-secondary border-border h-8 text-[10px] font-bold uppercase"><Save className="w-3 h-3 mr-2"/> {t('twin.saveScenario')}</Button>
           <Button 
             size="sm" 
             onClick={handleRecalculate}
@@ -197,7 +199,7 @@ export function TwinView() {
             className={`h-8 text-[10px] font-bold uppercase ${isCalculating ? 'bg-secondary text-primary' : ''}`}
           >
             {isCalculating ? <RefreshCcw className="w-3 h-3 mr-2 animate-spin" /> : <PlayCircle className="w-3 h-3 mr-2" />}
-            {isCalculating ? 'Computing Divergence...' : 'Recalculate Engine'}
+            {isCalculating ? t('simulator.simulating') : t('simulator.runSimulation')}
           </Button>
         </div>
       </header>
@@ -210,12 +212,12 @@ export function TwinView() {
           <div className="bg-card rounded-xl border border-border flex flex-col shrink-0">
             <div className="p-3 border-b border-border/50 bg-secondary/30 flex items-center justify-between">
               <h3 className="text-[10px] font-black uppercase text-white tracking-widest flex items-center gap-2">
-                <GitBranch className="w-3.5 h-3.5 text-blue-400" /> State Modifier
+                <GitBranch className="w-3.5 h-3.5 text-blue-400" /> {t('twin.overrideTitle')}
               </h3>
-              <Badge variant="outline" className="text-[9px] font-mono border-blue-500/30 text-blue-400 bg-blue-500/10">Active Fork</Badge>
+              <Badge variant="outline" className="text-[9px] font-mono border-blue-500/30 text-blue-400 bg-blue-500/10">{t('ops.active')}</Badge>
             </div>
             <div className="p-4 space-y-4">
-              <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-2">Group Stage Results (Group A)</div>
+              <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-2">Juegos de Fase de Grupos (Grupo A)</div>
               
               {displayMatches.length > 0 ? (
                 displayMatches.map((match) => {
@@ -266,7 +268,7 @@ export function TwinView() {
 
           <div className="bg-card rounded-xl border border-border p-4 flex flex-col gap-3">
              <h3 className="text-[10px] font-black uppercase text-white tracking-widest flex items-center gap-2 border-b border-border/50 pb-2 mb-1">
-                <Settings2 className="w-3.5 h-3.5 text-orange-400" /> Twin Settings
+                <Settings2 className="w-3.5 h-3.5 text-orange-400" /> {t('simulator.customWeights')}
               </h3>
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold text-slate-400 uppercase">Tiebreaker Protocol</span>
@@ -301,16 +303,16 @@ export function TwinView() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
              <div className="bg-card rounded-xl border border-border p-4">
                 <h3 className="text-[10px] font-black uppercase text-white tracking-widest flex items-center justify-between mb-4">
-                  <span className="flex items-center gap-2"><Trophy className="w-3.5 h-3.5 text-yellow-400" /> Live Standings: Group A</span>
-                  <Badge variant="outline" className="text-[8px] bg-primary/10 text-primary border-primary/20">Altered</Badge>
+                  <span className="flex items-center gap-2"><Trophy className="w-3.5 h-3.5 text-yellow-400" /> {t('twin.projectedStandings')}: Grupo A</span>
+                  <Badge variant="outline" className="text-[8px] bg-primary/10 text-primary border-primary/20">{t('ops.simulated')}</Badge>
                 </h3>
                 
                 <table className="w-full text-left text-xs">
                   <thead>
                     <tr className="text-[9px] uppercase font-bold text-slate-500 border-b border-border/50">
-                      <th className="pb-2">Team</th>
-                      <th className="pb-2 text-center w-8">P</th>
-                      <th className="pb-2 text-center w-8">GD</th>
+                      <th className="pb-2">{t('dashboard.team')}</th>
+                      <th className="pb-2 text-center w-8">PJ</th>
+                      <th className="pb-2 text-center w-8">DG</th>
                       <th className="pb-2 text-center w-8">Pts</th>
                     </tr>
                   </thead>
@@ -360,7 +362,7 @@ export function TwinView() {
              <div className="p-4 border-b border-border/50 flex items-center justify-between bg-secondary/30">
                <h3 className="text-[10px] font-black uppercase text-white tracking-widest flex items-center gap-2">
                  <img src="https://flagcdn.com/w20/us.png" className="w-4 h-3 rounded-[2px] hidden" alt="US"/>
-                 <Activity className="w-3.5 h-3.5 text-emerald-400" /> AI Championship Probability Matrix
+                 <Activity className="w-3.5 h-3.5 text-emerald-400" /> {t('dashboard.probabilityModel')}
                </h3>
                <Badge className="text-[8px] uppercase font-mono tracking-wider">Post-Recalculation</Badge>
              </div>

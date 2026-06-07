@@ -16,7 +16,7 @@ export function GroupsView() {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-8rem)] gap-4 text-slate-400 animate-in fade-in duration-500">
         <div className="w-8 h-8 rounded-full border-t-2 border-primary animate-spin"></div>
-        <p className="text-xs font-bold uppercase tracking-widest animate-pulse">{t('Cargando Grupos...', 'Loading Groups...')}</p>
+        <p className="text-xs font-bold uppercase tracking-widest animate-pulse">{t('common.loading')}</p>
       </div>
     );
   }
@@ -27,7 +27,7 @@ export function GroupsView() {
         <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center border border-red-500/20">
            <AlertCircle className="w-6 h-6 text-red-500" />
         </div>
-        <h3 className="text-sm font-bold text-white tracking-wide">{t('Error de Conexión', 'Connection Error')}</h3>
+        <h3 className="text-sm font-bold text-white tracking-wide">{t('common.connectionError')}</h3>
         <p className="text-xs max-w-sm text-center opacity-80">{error.message}</p>
       </div>
     );
@@ -37,8 +37,8 @@ export function GroupsView() {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-8rem)] gap-3 text-slate-400 animate-in fade-in duration-500">
         <Activity className="w-10 h-10 opacity-20" />
-        <h3 className="text-sm font-bold text-white tracking-wide">{t('Sin Grupos', 'No Groups')}</h3>
-        <p className="text-xs max-w-sm text-center opacity-80">{t('No hay equipos asignados a grupos en la base de datos.', 'No teams assigned to groups in the database.')}</p>
+        <h3 className="text-sm font-bold text-white tracking-wide">{t('common.noData')}</h3>
+        <p className="text-xs max-w-sm text-center opacity-80">{t('common.noDataDesc')}</p>
       </div>
     );
   }
@@ -96,8 +96,8 @@ export function GroupsView() {
   return (
     <div className="space-y-4 animate-in fade-in duration-500">
       <header className="space-y-0.5 mb-4">
-        <h1 className="text-2xl font-black tracking-tight text-white uppercase">{t('Posiciones de Grupos', 'Group Standings')}</h1>
-        <p className="text-xs text-slate-400 font-medium tracking-wide uppercase">{t('Puntos en vivo y simulaciones', 'Live points and simulations')}</p>
+        <h1 className="text-2xl font-black tracking-tight text-white uppercase">{t('groups.title', 'Posiciones de Grupos')}</h1>
+        <p className="text-xs text-slate-400 font-medium tracking-wide uppercase">{t('groups.subtitle', 'Puntos en vivo y simulaciones')}</p>
       </header>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
@@ -106,23 +106,23 @@ export function GroupsView() {
           return (
             <Card key={g as string} className="overflow-hidden border-border bg-card">
               <CardHeader className="bg-card py-2 px-3 border-b border-border/50 flex flex-row items-center justify-between space-y-0">
-                <CardTitle className="text-xs font-bold text-white uppercase">{t('Grupo', 'Group')} {g as string}</CardTitle>
-                <span className="text-[10px] text-primary font-bold bg-primary/10 px-2 py-0.5 rounded border border-primary/20">{t('EN VIVO', 'LIVE')}</span>
+                <CardTitle className="text-xs font-bold text-white uppercase">{t('matchDetail.timeline').split(' ')[1] || 'Grupo'} {g as string}</CardTitle>
+                <span className="text-[10px] text-primary font-bold bg-primary/10 px-2 py-0.5 rounded border border-primary/20">{t('matches.live')}</span>
               </CardHeader>
               <CardContent className="p-0 overflow-x-auto w-full">
                 <Table className="text-xs min-w-max w-full">
                   <TableHeader>
                     <TableRow className="border-border/50 hover:bg-transparent">
-                      <TableHead className="w-8 border-r border-border/50 text-center font-bold text-slate-500 h-8">{t('POS', 'POS')}</TableHead>
-                      <TableHead className="min-w-[120px] font-bold text-slate-500 h-8">{t('EQUIPO', 'TEAM')}</TableHead>
-                      <TableHead className="text-center w-8 font-bold text-slate-500 h-8">{t('PJ', 'P')}</TableHead>
-                      <TableHead className="text-center w-8 font-bold text-slate-500 h-8">{t('PG', 'W')}</TableHead>
-                      <TableHead className="text-center w-8 font-bold text-slate-500 h-8">{t('PE', 'D')}</TableHead>
-                      <TableHead className="text-center w-8 font-bold text-slate-500 h-8">{t('PP', 'L')}</TableHead>
-                      <TableHead className="text-center w-8 font-bold text-slate-500 h-8">{t('GF', 'GF')}</TableHead>
-                      <TableHead className="text-center w-8 font-bold text-slate-500 h-8">{t('GC', 'GA')}</TableHead>
-                      <TableHead className="text-center w-8 font-bold text-slate-500 h-8">{t('DG', 'GD')}</TableHead>
-                      <TableHead className="text-center w-12 font-bold text-white h-8">{t('PTS', 'PTS')}</TableHead>
+                      <TableHead className="w-8 border-r border-border/50 text-center font-bold text-slate-500 h-8">{t('dashboard.pos').toUpperCase()}</TableHead>
+                      <TableHead className="min-w-[120px] font-bold text-slate-500 h-8">{t('dashboard.team').toUpperCase()}</TableHead>
+                      <TableHead className="text-center w-8 font-bold text-slate-500 h-8">PJ</TableHead>
+                      <TableHead className="text-center w-8 font-bold text-slate-500 h-8">PG</TableHead>
+                      <TableHead className="text-center w-8 font-bold text-slate-500 h-8">PE</TableHead>
+                      <TableHead className="text-center w-8 font-bold text-slate-500 h-8">PP</TableHead>
+                      <TableHead className="text-center w-8 font-bold text-slate-500 h-8">GF</TableHead>
+                      <TableHead className="text-center w-8 font-bold text-slate-500 h-8">GC</TableHead>
+                      <TableHead className="text-center w-8 font-bold text-slate-500 h-8">DG</TableHead>
+                      <TableHead className="text-center w-12 font-bold text-white h-8">{t('dashboard.pts').toUpperCase()}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -155,5 +155,6 @@ export function GroupsView() {
         })}
       </div>
     </div>
-  )
+  );
 }
+

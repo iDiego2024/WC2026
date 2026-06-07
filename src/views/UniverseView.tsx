@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useTeams, useMatches } from '../hooks/useData';
+import { useLanguage } from "../context/LanguageContext";
 
 const TYPE_COLORS: Record<string, string> = {
   player: 'text-blue-400 bg-blue-500/20 border-blue-500/50',
@@ -26,6 +27,7 @@ const TYPE_ICONS: Record<string, any> = {
 };
 
 export function UniverseView() {
+  const { t } = useLanguage();
   const { teams, loading: teamsLoading } = useTeams();
   const { matches, loading: matchesLoading } = useMatches();
 
@@ -57,7 +59,7 @@ export function UniverseView() {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-400 animate-in fade-in duration-500 min-h-[400px]">
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
-        <p className="text-xs font-bold uppercase tracking-widest animate-pulse">Building Knowledge Graph...</p>
+        <p className="text-xs font-bold uppercase tracking-widest animate-pulse">{t('universe.loadingGraph')}</p>
       </div>
     );
   }
@@ -83,7 +85,7 @@ export function UniverseView() {
   groups.forEach(g => {
     allNodes.push({
       id: `group-${g}`,
-      label: `Group ${g}`,
+      label: `${t('universe.groupNode')} ${g}`,
       type: 'tournament',
       img: ''
     });
@@ -102,7 +104,7 @@ export function UniverseView() {
       allEdges.push({
         source: `team-${team.code}`,
         target: `group-${team.group_name}`,
-        label: 'Belongs To'
+        label: t('universe.belongsTo')
       });
     }
   });
@@ -134,20 +136,20 @@ export function UniverseView() {
     allEdges.push({
       source: `team-${home.code}`,
       target: matchNodeId,
-      label: 'Home Team'
+      label: t('universe.homeTeam')
     });
 
     allEdges.push({
       source: `team-${away.code}`,
       target: matchNodeId,
-      label: 'Away Team'
+      label: t('universe.awayTeam')
     });
 
     if (m.stadium) {
       allEdges.push({
         source: `stadium-${m.stadium.id}`,
         target: matchNodeId,
-        label: 'Hosts Match'
+        label: t('universe.hostsMatch')
       });
     }
   });
@@ -263,9 +265,9 @@ export function UniverseView() {
       <header className="space-y-0.5 mb-2 border-b border-border/50 pb-4 shrink-0">
         <h1 className="text-2xl font-black tracking-tight text-white uppercase flex items-center gap-3">
           <Network className="w-6 h-6 text-primary" />
-          Universo Mundialista
+          {t('universe.title')}
         </h1>
-        <p className="text-xs text-slate-400 font-medium tracking-wide uppercase">Knowledge Graph: Explora la historia y conexiones de la Copa 2026</p>
+        <p className="text-xs text-slate-400 font-medium tracking-wide uppercase">{t('universe.subtitle')}</p>
       </header>
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-0">
@@ -283,13 +285,13 @@ export function UniverseView() {
                     setSelectedGroup('');
                   }
                 }}
-                placeholder="Buscar equipos, estadios, partidos..." 
+                placeholder={t('universe.searchPlaceholder')}
                 className="pl-9 bg-secondary border-border text-xs" 
               />
             </div>
             
             <div className="space-y-1">
-              <div className="text-[9px] font-black uppercase text-slate-500 tracking-widest mb-1.5">Filtrar Grupo</div>
+              <div className="text-[9px] font-black uppercase text-slate-500 tracking-widest mb-1.5">{t('universe.filterGroup')}</div>
               <div className="flex flex-wrap gap-1 max-h-16 overflow-y-auto no-scrollbar">
                 {groups.map(g => (
                   <button 
@@ -314,14 +316,14 @@ export function UniverseView() {
                    onClick={() => setActiveTypeFilter(activeTypeFilter === type ? null : type)}
                    className={`text-[9px] uppercase cursor-pointer hover:bg-white/10 ${activeTypeFilter === type ? 'ring-2 ring-primary ring-offset-1 ring-offset-background' : ''} ${TYPE_COLORS[type]}`}
                  >
-                   {type}
+                   {t(`universe.${type}Node`, type)}
                  </Badge>
                ))}
             </div>
           </div>
           
           <div className="flex-1 overflow-y-auto no-scrollbar p-0">
-            <div className="p-3 text-[10px] font-black uppercase text-slate-500 tracking-widest pl-4">Entidades Conectadas ({filteredNodes.length})</div>
+            <div className="p-3 text-[10px] font-black uppercase text-slate-500 tracking-widest pl-4">{t('universe.connectedEntities')} ({filteredNodes.length})</div>
             <div className="space-y-1 p-2">
               {filteredNodes.slice(0, 20).map(node => {
                 const Icon = TYPE_ICONS[node.type] || Flag;
@@ -332,18 +334,18 @@ export function UniverseView() {
                     className={`w-full flex items-center gap-3 p-2 rounded-lg text-left transition-colors ${activeNode === node.id ? 'bg-primary/20 border border-primary/50' : 'hover:bg-white/5 border border-transparent'}`}
                   >
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border ${TYPE_COLORS[node.type]}`}>
-                      <Icon className="w-4 h-4" />
+                       <Icon className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className={`text-xs font-bold truncate ${activeNode === node.id ? 'text-primary' : 'text-white'}`}>{node.label}</div>
-                      <div className="text-[9px] uppercase text-slate-500 font-bold">{node.type}</div>
+                      <div className="text-[9px] uppercase text-slate-500 font-bold">{t(`universe.${node.type}Node`, node.type)}</div>
                     </div>
                   </button>
                 )
               })}
               {filteredNodes.length > 20 && (
                 <div className="text-center text-[9px] font-mono text-slate-600 py-2">
-                  Showing top 20 nodes. Search to refine.
+                  {t('universe.showingTopNodes')}
                 </div>
               )}
             </div>
@@ -369,7 +371,7 @@ export function UniverseView() {
           <div className="absolute top-4 left-4 z-20">
              <div className="bg-secondary/80 backdrop-blur-sm border border-border px-3 py-1.5 rounded-full flex items-center gap-2">
                <Database className="w-3.5 h-3.5 text-primary" />
-               <span className="text-[10px] uppercase font-bold tracking-widest text-white">Dynamic Graph Loaded</span>
+               <span className="text-[10px] uppercase font-bold tracking-widest text-white">{t('universe.graphLoaded')}</span>
                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse ml-2" />
              </div>
           </div>
@@ -476,8 +478,8 @@ export function UniverseView() {
           {!activeNodeData ? (
              <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-4">
                <Network className="w-12 h-12 text-slate-700" />
-               <h3 className="text-sm font-black uppercase text-slate-500 tracking-widest">Select Node</h3>
-               <p className="text-xs text-slate-600">Click any entity in the network graph to inspect its details and relationships.</p>
+               <h3 className="text-sm font-black uppercase text-slate-500 tracking-widest">{t('universe.selectNode')}</h3>
+               <p className="text-xs text-slate-600">{t('universe.selectNodeDesc')}</p>
              </div>
           ) : (
              <div className="flex-1 flex flex-col animate-in slide-in-from-right-4 duration-300">
@@ -486,7 +488,7 @@ export function UniverseView() {
                      <X className="w-4 h-4" />
                    </Button>
                    <Badge variant="outline" className={`absolute top-2 left-2 text-[9px] uppercase font-bold border-white/20 bg-background text-white`}>
-                     {activeNodeData.type}
+                     {t(`universe.${activeNodeData.type}Node`, activeNodeData.type)}
                    </Badge>
                    
                    <div className="w-16 h-16 rounded-xl bg-background border-2 border-border shadow-2xl absolute -bottom-8 flex items-center justify-center text-primary overflow-hidden">
@@ -507,7 +509,7 @@ export function UniverseView() {
 
                 <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-6">
                    <div>
-                     <h3 className="text-[9px] font-black uppercase text-slate-500 tracking-widest mb-3">Conexiones Directas</h3>
+                     <h3 className="text-[9px] font-black uppercase text-slate-500 tracking-widest mb-3">{t('universe.directConnections')}</h3>
                      <div className="space-y-2">
                        {filteredEdges.filter(e => e.source === activeNode || e.target === activeNode).map((e, idx) => {
                           const isIncoming = e.target === activeNode;
@@ -532,14 +534,14 @@ export function UniverseView() {
 
                    <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
                       <h3 className="text-[10px] font-black uppercase text-primary tracking-widest flex items-center gap-2 mb-2">
-                        <Database className="w-3 h-3" /> Metadatos
+                        <Database className="w-3 h-3" /> {t('universe.metadata')}
                       </h3>
                       <div className="font-mono text-[9px] text-slate-400 space-y-1">
                         {activeNodeData.type === 'team' && teamDetails && (
                           <>
                             <div className="flex justify-between"><span>FIFA Rank:</span> <span className="text-white">#{teamDetails.fifa_rank}</span></div>
                             <div className="flex justify-between"><span>Continent:</span> <span className="text-white">{teamDetails.continent}</span></div>
-                            <div className="flex justify-between"><span>Group:</span> <span className="text-white">Group {teamDetails.group_name}</span></div>
+                            <div className="flex justify-between"><span>Group:</span> <span className="text-white">{t('universe.groupNode')} {teamDetails.group_name}</span></div>
                           </>
                         )}
                         {activeNodeData.type === 'event' && matchDetails && (
@@ -555,7 +557,7 @@ export function UniverseView() {
                             <div className="flex justify-between"><span>Capacity:</span> <span className="text-white">{stadiumDetails.capacity?.toLocaleString() || 'N/A'}</span></div>
                           </>
                         )}
-                        <div className="flex justify-between"><span>Degree:</span> <span className="text-white">{filteredEdges.filter(e => e.source === activeNode || e.target === activeNode).length} edges</span></div>
+                        <div className="flex justify-between"><span>{t('universe.degree')}:</span> <span className="text-white">{filteredEdges.filter(e => e.source === activeNode || e.target === activeNode).length} {t('universe.edges')}</span></div>
                       </div>
                    </div>
                 </div>

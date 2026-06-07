@@ -51,7 +51,7 @@ export function PredictorView() {
       });
     } catch (error) {
       console.error(error);
-      alert(t("Falló al guardar predicción. Verifica permisos o estado de inicio de sesión.", "Failed to save prediction. Check permissions or login status."));
+      alert(t("predictor.saveFailed"));
     } finally {
       setSavingId(null);
     }
@@ -73,11 +73,11 @@ export function PredictorView() {
         <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-4">
           <Trophy className="w-12 h-12 text-primary" />
         </div>
-        <h2 className="text-3xl font-black">{t('Ligas de Predicciones', 'Predictor Leagues')}</h2>
-        <p className="text-muted-foreground max-w-md">{t('Inicia sesión para guardar predicciones, crear ligas privadas y competir.', 'Sign in to save your match predictions, create private leagues, and compete with friends.')}</p>
+        <h2 className="text-3xl font-black">{t('predictor.signInTitle')}</h2>
+        <p className="text-muted-foreground max-w-md">{t('predictor.signInDesc')}</p>
         <Button size="lg" onClick={signInWithGoogle} className="gap-2 font-bold uppercase tracking-wider text-xs">
           <LogIn className="w-5 h-5" />
-          {t('Inicia sesión con Google', 'Sign in with Google')}
+          {t('predictor.signInButton')}
         </Button>
       </div>
     );
@@ -87,8 +87,8 @@ export function PredictorView() {
     <div className="space-y-4 animate-in fade-in duration-500">
       <header className="flex items-end justify-between mb-4">
         <div className="space-y-0.5">
-          <h1 className="text-2xl font-black tracking-tight text-white uppercase">{t('Tus Predicciones', 'Your Predictions')}</h1>
-          <p className="text-xs text-slate-400 font-medium tracking-wide uppercase">{t('Guarda tus marcadores', 'Save your scores before kickoff')}</p>
+          <h1 className="text-2xl font-black tracking-tight text-white uppercase">{t('predictor.title')}</h1>
+          <p className="text-xs text-slate-400 font-medium tracking-wide uppercase">{t('predictor.subtitle')}</p>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
@@ -100,7 +100,7 @@ export function PredictorView() {
           </div>
           <Button variant="outline" size="sm" onClick={signOut} className="h-8 text-[10px] font-bold uppercase">
             <LogOut className="w-3 h-3 mr-2" />
-            {t('Salir', 'Logout')}
+            {t('predictor.logout')}
           </Button>
         </div>
       </header>
@@ -132,7 +132,7 @@ export function PredictorView() {
               <Card key={match.id} className="shadow-none border-border bg-card">
                 <CardHeader className="p-2 border-b border-border/50 bg-secondary/30">
                   <CardDescription className="text-[10px] uppercase font-bold tracking-widest text-slate-400 text-center">
-                    {match.stage} {match.group_name && `• ${t('Grupo', 'Group')} ${match.group_name}`}
+                    {match.stage} {match.group_name && `• Grupo ${match.group_name}`}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-4 pt-4">
@@ -185,12 +185,12 @@ export function PredictorView() {
                       {isSaving ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
                       ) : null}
-                      {currentPred ? t('Actualizar Predicción', 'Update Prediction') : t('Guardar Predicción', 'Save Prediction')}
+                      {currentPred ? t('predictor.updatePrediction') : t('predictor.savePrediction')}
                     </Button>
                     
                     {currentPred?.points !== undefined && match.status === 'finished' && (
                       <div className="text-center text-[9px] font-black uppercase text-emerald-400 bg-emerald-500/10 py-1 rounded border border-emerald-500/20">
-                        {t('Puntos Ganados', 'Points Earned')}: +{currentPred.points}
+                        {t('predictor.pointsEarned')}: +{currentPred.points}
                       </div>
                     )}
                   </div>

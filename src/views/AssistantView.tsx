@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTeams, useMatches } from '../hooks/useData';
 import { GoogleGenAI } from '@google/genai';
+import { useLanguage } from '../context/LanguageContext';
 
 type Message = {
   id: string;
@@ -14,6 +15,7 @@ type Message = {
 };
 
 export function AssistantView() {
+  const { t } = useLanguage();
   const { teams, loading: teamsLoading } = useTeams();
   const { matches, loading: matchesLoading } = useMatches();
 
@@ -21,7 +23,7 @@ export function AssistantView() {
     {
       id: 'welcome',
       role: 'assistant',
-      content: '¡Hola! Soy tu Analista Táctico Asistido por IA. Estoy conectado en tiempo real a la base de datos del Mundial, simulador Monte Carlo y registros históricos. ¿Qué deseas analizar hoy?'
+      content: t('assistant.welcomeMessage')
     }
   ]);
   const [inputValue, setInputValue] = useState('');
@@ -40,7 +42,8 @@ export function AssistantView() {
 
   // Construct context representation for the prompt
   const contextPrompt = `
-You are the Tactical Assistant for the World Cup 2026.
+${t('assistant.systemPrompt')}
+
 Here is the current state of the database:
 - Teams:
 ${teams.map(t => `${t.name} (Code: ${t.code}, Group: ${t.group_name || 'TBD'}, FIFA Rank: ${t.fifa_rank || 'TBD'})`).join('\n')}
@@ -123,9 +126,9 @@ Answer in Spanish as the default language, keeping it tactical, precise, and pro
       <header className="space-y-0.5 mb-2 border-b border-border/50 pb-4 shrink-0">
         <h1 className="text-2xl font-black tracking-tight text-white uppercase flex items-center gap-3">
           <Bot className="w-6 h-6 text-primary" />
-          AI Tactical Assistant
+          {t('assistant.title')}
         </h1>
-        <p className="text-xs text-slate-400 font-medium tracking-wide uppercase">Powered by RAG, Live DB & Monte Carlo Engine</p>
+        <p className="text-xs text-slate-400 font-medium tracking-wide uppercase">{t('assistant.subtitle')}</p>
       </header>
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-0">
@@ -137,17 +140,17 @@ Answer in Spanish as the default language, keeping it tactical, precise, and pro
              <div className="flex items-center gap-4">
                <div className="flex items-center gap-2">
                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                 <span className="text-[10px] font-black uppercase text-emerald-400 tracking-widest">System Online</span>
+                 <span className="text-[10px] font-black uppercase text-emerald-400 tracking-widest">{t('assistant.systemOnline')}</span>
                </div>
                <div className="hidden sm:flex items-center gap-3">
-                  <Badge variant="outline" className="text-[9px] font-mono border-white/10 text-slate-400 gap-1"><Database className="w-3 h-3 text-blue-400"/> Live SQL</Badge>
-                  <Badge variant="outline" className="text-[9px] font-mono border-white/10 text-slate-400 gap-1"><BrainCircuit className="w-3 h-3 text-purple-400"/> Vectors Active</Badge>
-                  <Badge variant="outline" className="text-[9px] font-mono border-white/10 text-slate-400 gap-1"><Calculator className="w-3 h-3 text-orange-400"/> WASM Engine</Badge>
+                  <Badge variant="outline" className="text-[9px] font-mono border-white/10 text-slate-400 gap-1"><Database className="w-3 h-3 text-blue-400"/> {t('assistant.liveSql')}</Badge>
+                  <Badge variant="outline" className="text-[9px] font-mono border-white/10 text-slate-400 gap-1"><BrainCircuit className="w-3 h-3 text-purple-400"/> {t('assistant.vectorsActive')}</Badge>
+                  <Badge variant="outline" className="text-[9px] font-mono border-white/10 text-slate-400 gap-1"><Calculator className="w-3 h-3 text-orange-400"/> {t('assistant.wasmEngine')}</Badge>
                </div>
              </div>
              {!apiKey && (
                <Badge className="text-[8px] uppercase bg-amber-500/20 text-amber-400 border-amber-500/30">
-                 API Key Missing
+                 {t('assistant.apiKeyMissing')}
                </Badge>
              )}
           </div>
@@ -171,7 +174,7 @@ Answer in Spanish as the default language, keeping it tactical, precise, and pro
                     {/* Rich Widgets */}
                     {msg.isWidget && msg.widgetType === 'standings' && (
                       <div className="w-full max-w-sm bg-background border border-border rounded-xl overflow-hidden mt-1 shadow-lg">
-                        <div className="bg-secondary/50 px-3 py-2 border-b border-border/50 text-[10px] font-black uppercase text-white flex items-center gap-2"><Calculator className="w-3.5 h-3.5 text-blue-400"/> Live Calculated Group A</div>
+                        <div className="bg-secondary/50 px-3 py-2 border-b border-border/50 text-[10px] font-black uppercase text-white flex items-center gap-2"><Calculator className="w-3.5 h-3.5 text-blue-400"/> {t('assistant.liveCalculated')}</div>
                         <div className="p-3">
                           <table className="w-full text-left text-xs font-mono">
                             <tbody className="divide-y divide-border/50">
@@ -186,7 +189,7 @@ Answer in Spanish as the default language, keeping it tactical, precise, and pro
 
                     {msg.isWidget && msg.widgetType === 'simulation' && (
                       <div className="w-full max-w-sm bg-background border border-border rounded-xl overflow-hidden mt-1 shadow-lg">
-                        <div className="bg-secondary/50 px-3 py-2 border-b border-border/50 text-[10px] font-black uppercase text-white flex items-center gap-2"><Activity className="w-3.5 h-3.5 text-emerald-400"/> Monte Carlo Probabilities</div>
+                        <div className="bg-secondary/50 px-3 py-2 border-b border-border/50 text-[10px] font-black uppercase text-white flex items-center gap-2"><Activity className="w-3.5 h-3.5 text-emerald-400"/> {t('assistant.monteCarloProbs')}</div>
                         <div className="p-3 space-y-2">
                            <div className="flex justify-between items-center text-xs">
                              <div className="flex items-center gap-2"><img src="https://flagcdn.com/w20/fr.png" className="w-4" alt=""/> <span className="font-bold text-white">France</span></div>
@@ -205,7 +208,7 @@ Answer in Spanish as the default language, keeping it tactical, precise, and pro
 
                     {msg.isWidget && msg.widgetType === 'comparison' && (
                       <div className="w-full max-w-sm bg-background border border-border rounded-xl overflow-hidden mt-1 shadow-lg">
-                        <div className="bg-secondary/50 px-3 py-2 border-b border-border/50 text-[10px] font-black uppercase text-white flex items-center gap-2"><BrainCircuit className="w-3.5 h-3.5 text-purple-400"/> Tactical Vector Analysis</div>
+                        <div className="bg-secondary/50 px-3 py-2 border-b border-border/50 text-[10px] font-black uppercase text-white flex items-center gap-2"><BrainCircuit className="w-3.5 h-3.5 text-purple-400"/> {t('assistant.tacticalVectorAnalysis')}</div>
                         <div className="p-4 grid grid-cols-3 gap-2 text-center items-center">
                            <div>
                              <img src="https://flagcdn.com/w40/es.png" className="w-8 h-5.5 mx-auto rounded shadow" alt="ESP"/>
@@ -227,7 +230,7 @@ Answer in Spanish as the default language, keeping it tactical, precise, and pro
              ))}
              
              {isTyping && (
-               <div className="flex items-start gap-4 max-w-2xl">
+                <div className="flex items-start gap-4 max-w-2xl">
                   <div className="w-8 h-8 rounded-full bg-primary border-2 border-primary flex items-center justify-center shadow-md">
                     <Bot className="w-4 h-4 text-background" />
                   </div>
@@ -249,7 +252,7 @@ Answer in Spanish as the default language, keeping it tactical, precise, and pro
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                  placeholder="Pregunta sobre probabilidades, qué pasa si, tácticas o historial..."
+                  placeholder={t('assistant.placeholder')}
                   className="w-full bg-background border border-border rounded-full pl-12 pr-14 py-4 text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner"
                 />
                 <Button 
@@ -269,7 +272,7 @@ Answer in Spanish as the default language, keeping it tactical, precise, and pro
            
            <div className="bg-card border border-border rounded-xl p-4">
              <h3 className="text-[10px] font-black uppercase text-white tracking-widest flex items-center gap-2 mb-4 border-b border-border/50 pb-2">
-               <FileText className="w-3.5 h-3.5 text-primary" /> Prompts Sugeridos
+               <FileText className="w-3.5 h-3.5 text-primary" /> {t('assistant.suggestedPrompts')}
              </h3>
              <div className="space-y-2">
                {[
@@ -291,28 +294,27 @@ Answer in Spanish as the default language, keeping it tactical, precise, and pro
 
            <div className="bg-card border border-border rounded-xl p-4">
              <h3 className="text-[10px] font-black uppercase text-white tracking-widest flex items-center gap-2 mb-4 border-b border-border/50 pb-2">
-               <Database className="w-3.5 h-3.5 text-blue-400" /> Contexto Inyectado
+               <Database className="w-3.5 h-3.5 text-blue-400" /> {t('assistant.injectedContext')}
              </h3>
              <div className="space-y-3 font-mono text-[9px]">
-               <div>
-                 <div className="text-slate-500 font-bold uppercase mb-1">RAG Indexes</div>
-                 <div className="flex flex-wrap gap-1">
-                   <Badge variant="outline" className="text-[8px] bg-secondary border-border text-slate-300">players_tactical_v4</Badge>
-                   <Badge variant="outline" className="text-[8px] bg-secondary border-border text-slate-300">wc_history_records</Badge>
-                 </div>
-               </div>
-               <div>
-                 <div className="text-slate-500 font-bold uppercase mb-1">Live Tools</div>
-                 <ul className="text-slate-400 list-disc pl-4 space-y-1">
-                   <li><span className="text-emerald-400">getLiveStandings()</span></li>
-                   <li><span className="text-emerald-400">runMonteCarlo(args)</span></li>
-                   <li><span className="text-emerald-400">predictMatch(id)</span></li>
-                 </ul>
-               </div>
+                <div>
+                  <div className="text-slate-500 font-bold uppercase mb-1">{t('assistant.ragIndexes')}</div>
+                  <div className="flex flex-wrap gap-1">
+                    <Badge variant="outline" className="text-[8px] bg-secondary border-border text-slate-300">players_tactical_v4</Badge>
+                    <Badge variant="outline" className="text-[8px] bg-secondary border-border text-slate-300">wc_history_records</Badge>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-slate-500 font-bold uppercase mb-1">{t('assistant.liveTools')}</div>
+                  <ul className="text-slate-400 list-disc pl-4 space-y-1">
+                    <li><span className="text-emerald-400">getLiveStandings()</span></li>
+                    <li><span className="text-emerald-400">runMonteCarlo(args)</span></li>
+                    <li><span className="text-emerald-400">predictMatch(id)</span></li>
+                  </ul>
+                </div>
              </div>
            </div>
         </div>
-
       </div>
     </div>
   );

@@ -5,8 +5,10 @@ import { BrainCircuit, Play, BarChart2, Activity, ShieldAlert, Cpu, Settings2, R
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTeams, useMatches } from '../hooks/useData';
 import { runMonteCarlo } from '../utils/simulatorEngine';
+import { useLanguage } from '../context/LanguageContext';
 
 export function SimulatorView() {
+  const { t } = useLanguage();
   const { teams, loading: teamsLoading, error: teamsError } = useTeams();
   const { matches, loading: matchesLoading, error: matchesError } = useMatches();
   
@@ -139,22 +141,22 @@ function simMatch(teamA, teamB, eloA, eloB) {
         <div>
           <h1 className="text-2xl font-black tracking-tight text-white uppercase flex items-center gap-3">
             <BrainCircuit className="w-6 h-6 text-primary" />
-            Monte Carlo Engine
+            {t('simulator.title')}
           </h1>
-          <p className="text-xs text-slate-400 font-medium tracking-wide uppercase">Stochastic simulation & Bayesian inference</p>
+          <p className="text-xs text-slate-400 font-medium tracking-wide uppercase">{t('simulator.subtitle')}</p>
         </div>
         <div className="flex items-center gap-4 bg-secondary/50 p-2 rounded-lg border border-border">
           <div className="flex flex-col">
-            <span className="text-[9px] uppercase font-bold text-slate-500">Nodes Active</span>
+            <span className="text-[9px] uppercase font-bold text-slate-500">{t('ops.realtime')}</span>
             <span className="text-xs font-mono font-bold text-emerald-400 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> 1,024
             </span>
           </div>
           <div className="w-px h-8 bg-border"></div>
           <div className="flex flex-col">
-            <span className="text-[9px] uppercase font-bold text-slate-500">Database Connection</span>
+            <span className="text-[9px] uppercase font-bold text-slate-500">{t('ops.connected')}</span>
             <span className="text-xs font-mono font-bold text-white flex items-center gap-1">
-              <Database className="w-3.5 h-3.5 text-blue-400" /> Connected
+              <Database className="w-3.5 h-3.5 text-blue-400" /> {t('ops.success')}
             </span>
           </div>
         </div>
@@ -165,8 +167,8 @@ function simMatch(teamA, teamB, eloA, eloB) {
           <div className="flex items-center gap-3">
             <ShieldAlert className="w-6 h-6 text-destructive" />
             <div>
-              <h3 className="font-bold text-white">Database connection error</h3>
-              <p className="text-xs text-slate-400">Failed to load teams or matches data. Verify Supabase tables exist and match data has been seeded.</p>
+              <h3 className="font-bold text-white">{t('common.connectionError')}</h3>
+              <p className="text-xs text-slate-400">{t('common.networkError')}</p>
             </div>
           </div>
         </Card>
@@ -181,22 +183,22 @@ function simMatch(teamA, teamB, eloA, eloB) {
             <CardHeader className="bg-secondary/30 border-b border-border/50 p-3">
               <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-200 flex items-center gap-2">
                 <Settings2 className="w-4 h-4 text-primary" />
-                Parameters
+                {t('simulator.customWeights')}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-6">
               
               <div className="space-y-3">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Simulation Scope</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t('ops.viewName')}</label>
                 <div className="grid grid-cols-3 gap-2">
-                  <button onClick={() => setScope('groups')} className={`text-[10px] uppercase font-bold p-2 rounded border ${scope === 'groups' ? 'bg-primary/20 border-primary text-primary' : 'bg-secondary border-border text-slate-400 hover:border-slate-500'} transition-colors`}>Groups</button>
-                  <button onClick={() => setScope('brackets')} className={`text-[10px] uppercase font-bold p-2 rounded border ${scope === 'brackets' ? 'bg-primary/20 border-primary text-primary' : 'bg-secondary border-border text-slate-400 hover:border-slate-500'} transition-colors`}>Bracket</button>
-                  <button onClick={() => setScope('full')} className={`text-[10px] uppercase font-bold p-2 rounded border ${scope === 'full' ? 'bg-primary/20 border-primary text-primary' : 'bg-secondary border-border text-slate-400 hover:border-slate-500'} transition-colors flex items-center justify-center gap-1`}><Zap className="w-3 h-3"/> Full</button>
+                  <button onClick={() => setScope('groups')} className={`text-[10px] uppercase font-bold p-2 rounded border ${scope === 'groups' ? 'bg-primary/20 border-primary text-primary' : 'bg-secondary border-border text-slate-400 hover:border-slate-500'} transition-colors`}>{t('simulator.groupStageProb')}</button>
+                  <button onClick={() => setScope('brackets')} className={`text-[10px] uppercase font-bold p-2 rounded border ${scope === 'brackets' ? 'bg-primary/20 border-primary text-primary' : 'bg-secondary border-border text-slate-400 hover:border-slate-500'} transition-colors`}>{t('ops.matches')}</button>
+                  <button onClick={() => setScope('full')} className={`text-[10px] uppercase font-bold p-2 rounded border ${scope === 'full' ? 'bg-primary/20 border-primary text-primary' : 'bg-secondary border-border text-slate-400 hover:border-slate-500'} transition-colors flex items-center justify-center gap-1`}><Zap className="w-3 h-3"/> {t('matches.allStages')}</button>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Iterations (Runs)</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t('simulator.iterations')}</label>
                 <div className="grid grid-cols-4 gap-2">
                   {[100, 1000, 10000, 100000].map(val => (
                     <button key={val} onClick={() => setRuns(val)} className={`text-[10px] font-mono font-bold p-2 rounded border ${runs === val ? 'bg-blue-500/20 border-blue-500 text-blue-400' : 'bg-secondary border-border text-slate-400 hover:border-slate-500'} transition-colors`}>
@@ -208,13 +210,13 @@ function simMatch(teamA, teamB, eloA, eloB) {
 
               <div className="space-y-4 pt-4 border-t border-border/50">
                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
-                   <span>Model Weights</span>
-                   <span onClick={handleResetWeights} className="text-primary cursor-pointer hover:underline">Reset</span>
+                   <span>{t('simulator.customWeights')}</span>
+                   <span onClick={handleResetWeights} className="text-primary cursor-pointer hover:underline">{t('twin.resetTwin')}</span>
                  </label>
                  
                  <div className="space-y-1">
                    <div className="flex items-center justify-between text-[10px] uppercase font-bold">
-                     <span className="text-slate-300">Base Elo Rating</span>
+                     <span className="text-slate-300">{t('simulator.eloImportance')}</span>
                      <span className="text-primary font-mono">{weights.elo}%</span>
                    </div>
                    <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
@@ -224,7 +226,7 @@ function simMatch(teamA, teamB, eloA, eloB) {
                  
                  <div className="space-y-1">
                    <div className="flex items-center justify-between text-[10px] uppercase font-bold">
-                     <span className="text-slate-300">Expected Goals (xG) Trend</span>
+                     <span className="text-slate-300">{t('simulator.attackWeight')}</span>
                      <span className="text-primary font-mono">{weights.xg}%</span>
                    </div>
                    <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
@@ -234,7 +236,7 @@ function simMatch(teamA, teamB, eloA, eloB) {
 
                  <div className="space-y-1">
                    <div className="flex items-center justify-between text-[10px] uppercase font-bold">
-                     <span className="text-slate-300">Fatigue & Altitude</span>
+                     <span className="text-slate-300">{t('simulator.defenseWeight')}</span>
                      <span className="text-primary font-mono">{weights.fatigue}%</span>
                    </div>
                    <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
@@ -261,19 +263,19 @@ function simMatch(teamA, teamB, eloA, eloB) {
                 {teamsLoading || matchesLoading ? (
                   <>
                     <RefreshCcw className="w-5 h-5 mr-3 animate-spin" />
-                    Loading Database...
+                    {t('common.loading')}
                   </>
                 ) : isSimulating ? (
                   <>
                     <RefreshCcw className="w-5 h-5 mr-3 animate-spin" />
-                    Crunching {runs.toLocaleString()} runs...
+                    {t('simulator.simulating')} ({runs.toLocaleString()} runs)...
                   </>
                 ) : teams.length === 0 ? (
                   "NO SEEDED DATA"
                 ) : (
                   <>
                     <Play className="w-5 h-5 mr-3" />
-                    EXECUTE SIMULATION
+                    {t('simulator.runSimulation').toUpperCase()}
                   </>
                 )}
               </Button>
@@ -305,10 +307,10 @@ function simMatch(teamA, teamB, eloA, eloB) {
           <Tabs defaultValue="results" className="flex-1 flex flex-col bg-card rounded-xl border border-border overflow-hidden">
             <div className="bg-secondary/30 border-b border-border/50 p-2 flex items-center justify-between">
               <TabsList className="bg-transparent space-x-2">
-                <TabsTrigger value="results" className="text-[10px] font-bold uppercase rounded-md data-[state=active]:bg-primary/20 data-[state=active]:text-primary border border-transparent data-[state=active]:border-primary/30">Analytics</TabsTrigger>
-                <TabsTrigger value="scenarios" className="text-[10px] font-bold uppercase rounded-md data-[state=active]:bg-primary/20 data-[state=active]:text-primary border border-transparent data-[state=active]:border-primary/30">Most Likely</TabsTrigger>
-                <TabsTrigger value="upsets" className="text-[10px] font-bold uppercase rounded-md data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-400 border border-transparent data-[state=active]:border-orange-500/30 flex items-center gap-1.5"><ShieldAlert className="w-3 h-3"/> Upsets</TabsTrigger>
-                <TabsTrigger value="code" className="text-[10px] font-bold uppercase rounded-md data-[state=active]:bg-white/10 data-[state=active]:text-white border border-transparent data-[state=active]:border-white/20"><Code className="w-3 h-3 mr-1.5"/> Logic</TabsTrigger>
+                <TabsTrigger value="results" className="text-[10px] font-bold uppercase rounded-md data-[state=active]:bg-primary/20 data-[state=active]:text-primary border border-transparent data-[state=active]:border-primary/30">{t('dashboard.analysisTitle')}</TabsTrigger>
+                <TabsTrigger value="scenarios" className="text-[10px] font-bold uppercase rounded-md data-[state=active]:bg-primary/20 data-[state=active]:text-primary border border-transparent data-[state=active]:border-primary/30">{t('simulator.championshipProb')}</TabsTrigger>
+                <TabsTrigger value="upsets" className="text-[10px] font-bold uppercase rounded-md data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-400 border border-transparent data-[state=active]:border-orange-500/30 flex items-center gap-1.5"><ShieldAlert className="w-3 h-3"/> Sorpresas</TabsTrigger>
+                <TabsTrigger value="code" className="text-[10px] font-bold uppercase rounded-md data-[state=active]:bg-white/10 data-[state=active]:text-white border border-transparent data-[state=active]:border-white/20"><Code className="w-3 h-3 mr-1.5"/> Lógica</TabsTrigger>
               </TabsList>
             </div>
 
@@ -337,7 +339,7 @@ function simMatch(teamA, teamB, eloA, eloB) {
                 <>
                   <TabsContent value="results" className="m-0 h-full space-y-6 animate-in fade-in zoom-in-95 duration-500">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-xs font-black uppercase tracking-widest text-white">Championship Probabilities</h3>
+                      <h3 className="text-xs font-black uppercase tracking-widest text-white">{t('simulator.championshipProb')}</h3>
                       <span className="text-[9px] font-mono text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20">CONFIDENCE: HIGHEST ({runs.toLocaleString()} RUNS)</span>
                     </div>
 
@@ -354,7 +356,7 @@ function simMatch(teamA, teamB, eloA, eloB) {
                             
                             <div className="flex-1 flex items-center gap-3">
                               <div className="flex-1 h-3 bg-secondary rounded-sm overflow-hidden relative group-hover:bg-white/5 transition-colors">
-                                <div className={`h-full ${color} transition-all duration-1000 ease-out`} style={{ width: `${team.wins}%`}}></div>
+                                <div className={`h-full ${color} transition-all duration-1000 ease-out`} style={{ width: `${team.wins}%` }}></div>
                               </div>
                               <div className="w-12 text-right font-mono text-xs font-bold text-white">{team.wins}%</div>
                             </div>
@@ -365,14 +367,14 @@ function simMatch(teamA, teamB, eloA, eloB) {
 
                     <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-border/50">
                        <div className="p-4 bg-secondary/30 rounded-xl border border-white/5">
-                         <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-1">Most Likely Final</div>
+                         <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-1">Final más Probable</div>
                          {mostLikelyWinner && mostLikelyRunnerUp ? (
                            <>
                              <div className="flex items-center gap-3 mt-3">
                                <div className="flex items-center gap-2">
                                  <img src={`https://flagcdn.com/w20/${mostLikelyWinner.flag_code.toLowerCase()}.png`} className="w-5 h-3.5 rounded-[2px]" alt={mostLikelyWinner.name}/>
                                  <span className="text-sm font-black text-white">{mostLikelyWinner.code}</span>
-                               </div>
+                                </div>
                                <span className="text-[10px] font-mono text-slate-500">v</span>
                                <div className="flex items-center gap-2">
                                  <span className="text-sm font-black text-white">{mostLikelyRunnerUp.code}</span>
@@ -380,7 +382,7 @@ function simMatch(teamA, teamB, eloA, eloB) {
                                </div>
                              </div>
                              <div className="text-[10px] font-mono text-primary font-bold mt-2">
-                               {((mostLikelyWinner.wins + mostLikelyRunnerUp.wins) / 1.5).toFixed(1)}% Comp. Probability
+                               {((mostLikelyWinner.wins + mostLikelyRunnerUp.wins) / 1.5).toFixed(1)}% Prob. Comparada
                              </div>
                            </>
                          ) : (
@@ -389,11 +391,11 @@ function simMatch(teamA, teamB, eloA, eloB) {
                        </div>
                        
                        <div className="p-4 bg-secondary/30 rounded-xl border border-white/5">
-                         <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-1">Top Contender Stats</div>
+                         <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-1">Estadísticas de Líderes</div>
                          {mostLikelyWinner ? (
                            <div className="flex flex-col gap-2 mt-3 text-xs">
-                             <div className="flex justify-between items-center"><span className="font-bold text-white">Reach R16</span> <span className="font-mono text-primary">{mostLikelyWinner.r16}%</span></div>
-                             <div className="flex justify-between items-center"><span className="font-bold text-slate-400">Reach Quarter</span> <span className="font-mono text-slate-400">{mostLikelyWinner.quarter}%</span></div>
+                             <div className="flex justify-between items-center"><span className="font-bold text-white">Alcanzar Octavos</span> <span className="font-mono text-primary">{mostLikelyWinner.r16}%</span></div>
+                             <div className="flex justify-between items-center"><span className="font-bold text-slate-400">Alcanzar Cuartos</span> <span className="font-mono text-slate-400">{mostLikelyWinner.quarter}%</span></div>
                            </div>
                          ) : (
                            <div className="text-xs text-slate-400 mt-2">Run simulation to view stats.</div>
@@ -404,18 +406,18 @@ function simMatch(teamA, teamB, eloA, eloB) {
 
                   <TabsContent value="scenarios" className="m-0 h-full animate-in fade-in duration-500">
                     <div className="space-y-6">
-                      <h3 className="text-xs font-black uppercase tracking-widest text-slate-300">Phase Probabilities (Top 12)</h3>
+                      <h3 className="text-xs font-black uppercase tracking-widest text-slate-300">Probabilidad de Fase (Top 12)</h3>
                       <div className="w-full overflow-x-auto">
                         <table className="w-full text-left text-xs min-w-[500px]">
                           <thead>
                             <tr className="border-b border-border/50 text-[9px] text-slate-500 uppercase tracking-wider">
-                              <th className="pb-3 w-32">Team</th>
+                              <th className="pb-3 w-32">{t('dashboard.team')}</th>
                               <th className="pb-3 text-center">R32</th>
                               <th className="pb-3 text-center">R16</th>
-                              <th className="pb-3 text-center">QF</th>
+                              <th className="pb-3 text-center">CF</th>
                               <th className="pb-3 text-center">SF</th>
                               <th className="pb-3 text-center">Final</th>
-                              <th className="pb-3 text-center text-primary">Win</th>
+                              <th className="pb-3 text-center text-primary">Ganar%</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-border/50 font-mono text-[10px]">
@@ -442,9 +444,9 @@ function simMatch(teamA, teamB, eloA, eloB) {
                     <div className="flex items-center justify-between mb-6 border-b border-border/50 pb-4">
                       <div>
                         <h3 className="text-xs font-black uppercase tracking-widest text-orange-400 flex items-center gap-2">
-                          <ShieldAlert className="w-4 h-4"/> Statistical Anomalies
+                          <ShieldAlert className="w-4 h-4"/> Anomalías Estadísticas
                         </h3>
-                        <p className="text-[9px] text-slate-500 uppercase mt-1">Underdogs with favorable path (&gt;3% semifinal chance)</p>
+                        <p className="text-[9px] text-slate-500 uppercase mt-1">Underdogs con camino favorable (&gt;3% de posibilidad de semifinal)</p>
                       </div>
                     </div>
 
@@ -456,13 +458,13 @@ function simMatch(teamA, teamB, eloA, eloB) {
                               <div className="flex items-center gap-3">
                                 <img src={`https://flagcdn.com/w40/${team.flag_code.toLowerCase()}.png`} className="w-8 h-5.5 rounded shadow-sm" alt={team.name}/>
                                 <div>
-                                  <div className="text-xs font-black text-white uppercase">{team.name} to Semis</div>
+                                  <div className="text-xs font-black text-white uppercase">{team.name} a Semis</div>
                                   <div className="text-[10px] text-orange-400/80 font-bold">FIFA Rank: {team.fifa_rank}</div>
                                 </div>
                               </div>
                               <span className="text-xl font-mono font-bold text-orange-400">{team.semi}%</span>
                             </div>
-                            <p className="text-[10px] text-slate-400 mt-3 leading-relaxed">Model identifies high variance and strong simulation trajectories. Under certain group-stage distributions, they escape top-tier seeds until the Semifinals.</p>
+                            <p className="text-[10px] text-slate-400 mt-3 leading-relaxed">El modelo identifica alta variabilidad y trayectorias de simulación sólidas. Bajo ciertas distribuciones de fase de grupos, evitan cabezas de serie principales hasta Semifinales.</p>
                           </div>
                         ))
                       ) : (
@@ -475,7 +477,7 @@ function simMatch(teamA, teamB, eloA, eloB) {
 
                   <TabsContent value="code" className="m-0 h-full animate-in fade-in duration-500 flex flex-col">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-xs font-black uppercase tracking-widest text-slate-300">Core Simulation Logic</h3>
+                      <h3 className="text-xs font-black uppercase tracking-widest text-slate-300">Lógica Principal de Simulación</h3>
                       <Badge variant="outline" className="text-[9px] font-mono border-white/10 text-slate-500">src/utils/simulatorEngine.ts</Badge>
                     </div>
                     <div className="flex-1 bg-black/60 border border-white/10 rounded-xl overflow-hidden flex flex-col">

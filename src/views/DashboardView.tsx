@@ -109,14 +109,14 @@ export function DashboardView() {
   const dynamicInsights = useMemo(() => {
     if (fHome && fAway) {
       return [
-        t(`${fHome.name} llega con un ranking FIFA de #${fHome.fifa_rank} contra #${fAway.fifa_rank} de ${fAway.name}.`, `${fHome.name} enters with a FIFA ranking of #${fHome.fifa_rank} against #${fAway.fifa_rank} for ${fAway.name}.`),
-        t(`La probabilidad calculada favorece a ${fHome.name} con un ${fHomeProb}% frente al ${fAwayProb}% de ${fAway.name}.`, `Calculated probability favors ${fHome.name} with ${fHomeProb}% against ${fAwayProb}% for ${fAway.name}.`),
-        t(`El historial H2H proyectado y la aclimatación favorecerán un planteamiento de alta intensidad.`, `Projected H2H history and acclimatization will favor a high-intensity approach.`)
+        `${fHome.name} ${t('dashboard.insightHomeRank')} #${fHome.fifa_rank} ${t('dashboard.insightVersus')} #${fAway.fifa_rank} ${t('dashboard.insightOf')} ${fAway.name}.`,
+        `${t('dashboard.insightProb')} ${fHome.name} ${t('dashboard.insightWith')} ${fHomeProb}% ${t('dashboard.insightFrontTo')} ${fAwayProb}% ${t('dashboard.insightOf')} ${fAway.name}.`,
+        t('dashboard.insightH2h')
       ];
     }
     return [
-      t('Todos los partidos están listos para simulación.', 'All fixtures are ready for simulation.'),
-      t('Ejecuta el simulador Monte Carlo para actualizar proyecciones de campeonato.', 'Run the Monte Carlo simulator to update championship projections.')
+      t('dashboard.insightAllReady'),
+      t('dashboard.insightRunSim')
     ];
   }, [fHome, fAway, fHomeProb, fAwayProb, t]);
 
@@ -255,10 +255,10 @@ export function DashboardView() {
                 <p className="text-[9px] text-primary font-bold uppercase tracking-wider mb-1">{t('Nota Monte Carlo', 'Monte Carlo Insight')}</p>
                 {groupStandingsSim[0] ? (
                   <p className="text-[10px] text-slate-400 leading-relaxed">
-                    {t(`La simulación sugiere que ${groupStandingsSim[0].name} tiene la mayor prob. (${groupStandingsSim[0].prob}) de ganar el Grupo A.`, `Simulation suggests that ${groupStandingsSim[0].name} has the highest prob. (${groupStandingsSim[0].prob}) to win Group A.`)}
+                    {t('dashboard.mcInsightPart1')} {groupStandingsSim[0].name} {t('dashboard.mcInsightPart2')} ({groupStandingsSim[0].prob}) {t('dashboard.mcInsightPart3')}
                   </p>
                 ) : (
-                  <p className="text-[10px] text-slate-400 leading-relaxed">{t('No hay simulación disponible.', 'No simulation available.')}</p>
+                  <p className="text-[10px] text-slate-400 leading-relaxed">{t('common.noData')}</p>
                 )}
               </div>
             </div>

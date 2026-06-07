@@ -9,20 +9,20 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // Pass t function to nav items
-const getNavItems = (t: (es: string, en: string) => string) => [
-  { to: '/', icon: Home, label: t('Inicio', 'Home') },
-  { to: '/matches', icon: Calendar, label: t('Partidos', 'Matches') },
-  { to: '/groups', icon: BarChart3, label: t('Grupos', 'Groups') },
-  { to: '/predictor', icon: Trophy, label: t('Pronósticos', 'Predictor') },
-  { to: '/fantasy', icon: Shield, label: t('Fantasy', 'Fantasy') },
-  { to: '/simulator', icon: BrainCircuit, label: t('Simulador IA', 'AI Simulator') },
-  { to: '/universe', icon: Network, label: t('Universo', 'Universe') },
-  { to: '/twin', icon: Layers, label: t('Gemelo Digital', 'Digital Twin') },
-  { to: '/assistant', icon: Bot, label: t('Asistente', 'Assistant') },
-  { to: '/community', icon: Users, label: t('Comunidad', 'Community') },
-  { to: '/tv', icon: Tv, label: t('Modo TV', 'TV Mode') },
-  { to: '/admin', icon: Activity, label: t('Data Ops', 'Data Ops') },
-  { to: '/ops', icon: Server, label: t('Ops Center', 'Ops Center') },
+const getNavItems = (t: (key: string) => string) => [
+  { to: '/', icon: Home, label: t('nav.home') },
+  { to: '/matches', icon: Calendar, label: t('nav.matches') },
+  { to: '/groups', icon: BarChart3, label: t('nav.groups') },
+  { to: '/predictor', icon: Trophy, label: t('nav.predictor') },
+  { to: '/fantasy', icon: Shield, label: t('nav.fantasy') },
+  { to: '/simulator', icon: BrainCircuit, label: t('nav.simulator') },
+  { to: '/universe', icon: Network, label: t('nav.universe') },
+  { to: '/twin', icon: Layers, label: t('nav.twin') },
+  { to: '/assistant', icon: Bot, label: t('nav.assistant') },
+  { to: '/community', icon: Users, label: t('nav.community') },
+  { to: '/tv', icon: Tv, label: t('nav.tv') },
+  { to: '/admin', icon: Activity, label: t('nav.dataOps') },
+  { to: '/ops', icon: Server, label: t('nav.opsCenter') },
 ];
 
 
@@ -62,7 +62,7 @@ export function Navigation() {
              onClick={() => setLang(lang === 'es' ? 'en' : 'es')}
              className="w-full flex items-center justify-between px-3 py-2 rounded-md text-xs font-bold text-slate-400 hover:text-white hover:bg-accent/20 transition-colors"
           >
-            <span className="flex items-center gap-3"><Globe className="w-4 h-4" /> {t('Idioma', 'Language')}</span>
+            <span className="flex items-center gap-3"><Globe className="w-4 h-4" /> {t('nav.language')}</span>
             <span className="text-[10px] uppercase bg-black/30 px-2 py-0.5 rounded border border-border">{lang}</span>
           </button>
         </div>
