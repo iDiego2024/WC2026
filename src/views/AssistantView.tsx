@@ -93,10 +93,30 @@ Answer in Spanish as the default language, keeping it tactical, precise, and pro
 
     try {
       if (ai) {
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: contextPrompt + `\n\nPregunta del usuario: ${userMsgText}`
-        });
+        let response;
+        try {
+          // Primary: gemini-2.5-flash
+          response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: contextPrompt + `\n\nPregunta del usuario: ${userMsgText}`
+          });
+        } catch (e: any) {
+          console.warn('gemini-2.5-flash failed or high demand. Trying gemini-2.0-flash...', e);
+          try {
+            // Secondary: gemini-2.0-flash
+            response = await ai.models.generateContent({
+              model: 'gemini-2.0-flash',
+              contents: contextPrompt + `\n\nPregunta del usuario: ${userMsgText}`
+            });
+          } catch (e2: any) {
+            console.warn('gemini-2.0-flash failed. Trying gemini-1.5-flash...', e2);
+            // Tertiary: gemini-1.5-flash
+            response = await ai.models.generateContent({
+              model: 'gemini-1.5-flash',
+              contents: contextPrompt + `\n\nPregunta del usuario: ${userMsgText}`
+            });
+          }
+        }
         aiResponse.content = response.text || 'No pude generar una respuesta.';
       } else {
         // Fallback response with warning
