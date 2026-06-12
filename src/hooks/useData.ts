@@ -244,7 +244,7 @@ export function useMatchEvents(matchId: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
+  const fetchEvents = useCallback(() => {
     if (!matchId) return;
     premiumServices.getMatchEvents(matchId)
       .then(data => {
@@ -257,7 +257,29 @@ export function useMatchEvents(matchId: string) {
       });
   }, [matchId]);
 
-  return { events, loading, error };
+  useEffect(() => {
+    fetchEvents();
+
+    if (!matchId) return;
+
+    // Listen for Realtime events for this match
+    const channel = supabase
+      .channel(`public:match_events:match_id=${matchId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'match_events', filter: `match_id=eq.${matchId}` },
+        () => {
+          fetchEvents();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [matchId, fetchEvents]);
+
+  return { events, loading, error, refresh: fetchEvents };
 }
 
 export function useMatchLineups(matchId: string) {
@@ -265,7 +287,7 @@ export function useMatchLineups(matchId: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
+  const fetchLineups = useCallback(() => {
     if (!matchId) return;
     premiumServices.getMatchLineups(matchId)
       .then(data => {
@@ -278,7 +300,29 @@ export function useMatchLineups(matchId: string) {
       });
   }, [matchId]);
 
-  return { lineups, loading, error };
+  useEffect(() => {
+    fetchLineups();
+
+    if (!matchId) return;
+
+    // Listen for Realtime lineups for this match
+    const channel = supabase
+      .channel(`public:lineups:match_id=${matchId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'lineups', filter: `match_id=eq.${matchId}` },
+        () => {
+          fetchLineups();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [matchId, fetchLineups]);
+
+  return { lineups, loading, error, refresh: fetchLineups };
 }
 
 export function useMatchStatistics(matchId: string) {
@@ -286,7 +330,7 @@ export function useMatchStatistics(matchId: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
+  const fetchStatistics = useCallback(() => {
     if (!matchId) return;
     premiumServices.getMatchStatistics(matchId)
       .then(data => {
@@ -299,7 +343,29 @@ export function useMatchStatistics(matchId: string) {
       });
   }, [matchId]);
 
-  return { statistics, loading, error };
+  useEffect(() => {
+    fetchStatistics();
+
+    if (!matchId) return;
+
+    // Listen for Realtime statistics for this match
+    const channel = supabase
+      .channel(`public:match_statistics:match_id=${matchId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'match_statistics', filter: `match_id=eq.${matchId}` },
+        () => {
+          fetchStatistics();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [matchId, fetchStatistics]);
+
+  return { statistics, loading, error, refresh: fetchStatistics };
 }
 
 export function useH2HHistory(homeCode: string, awayCode: string) {
